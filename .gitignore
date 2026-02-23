@@ -1,0 +1,24 @@
+.vscode/
+workspace/
+_poc_run/
+_ebpf_run/
+*.o
+sandbox/
+portfolio/
+bin/
+tools/
+
+# Runtime / audit artifacts
+*.log
+*.jsonl
+
+# Keys / secrets
+*.pem
+*.key
+**/.ssh/id_*
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

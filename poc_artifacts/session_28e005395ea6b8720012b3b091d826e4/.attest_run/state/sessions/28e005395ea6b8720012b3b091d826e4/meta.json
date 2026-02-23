@@ -1,0 +1,13 @@
+{
+  "session_id": "28e005395ea6b8720012b3b091d826e4",
+  "started_at": "2026-02-22T09:51:29Z",
+  "workspace": {
+    "host_path": "/sandbox",
+    "container_path": "/workspace"
+  },
+  "docker": {
+    "container_id": "67248138f4b7eef47b52e0963a2b2f40a7048e35e4eb4a6866ec2d015a3eb973",
+    "image": "attest_base:latest"
+  },
+  "policy": {}
+}

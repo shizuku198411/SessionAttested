@@ -1,0 +1,17 @@
+policy_id: "poc-default"
+policy_version: "1.0.0"
+
+forbidden_exec:
+  - sha256: "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    comment: "codex (placeholder)"
+  - sha256: "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    comment: "claude-code (placeholder)"
+  - sha256: "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    comment: "mcp-server (placeholder)"
+
+forbidden_writers: []
+
+# legacy whitelist mode (optional; prefer forbidden_writers for dynamic environments)
+allowed_writers: []
+
+exceptions: []

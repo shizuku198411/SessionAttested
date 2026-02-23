@@ -1,0 +1,455 @@
+{
+  "schema_version": "1.0",
+  "attestation_type": "non_agent_direct_write",
+  "subject": {
+    "repo": "shizuku198411/sandbox",
+    "commit_sha": "3a1e62a00e3640b6e65cf1620c85a2dc23beef76",
+    "ref": ""
+  },
+  "session": {
+    "session_id": "28e005395ea6b8720012b3b091d826e4",
+    "workspace": {
+      "host_path": "/sandbox",
+      "container_path": "/workspace"
+    },
+    "commit_binding": {
+      "commit_sha": "3a1e62a00e3640b6e65cf1620c85a2dc23beef76",
+      "parent_sha": "69d6b8a2cff3d4fa466ad38d981704758e6ef0bd",
+      "repo_path": "/workspace",
+      "created_rfc3339": "2026-02-22T09:56:42Z"
+    },
+    "commit_bindings": [
+      {
+        "commit_sha": "3a1e62a00e3640b6e65cf1620c85a2dc23beef76",
+        "parent_sha": "69d6b8a2cff3d4fa466ad38d981704758e6ef0bd",
+        "repo_path": "/workspace",
+        "created_rfc3339": "2026-02-22T09:56:42Z"
+      }
+    ]
+  },
+  "environment": {
+    "mode": "docker_poc",
+    "collector": {
+      "name": "session-attested-collector",
+      "version": "0.1.0",
+      "node_id": "poc-node"
+    },
+    "developer_container": {
+      "runtime": "docker",
+      "container_id": "67248138f4b7eef47b52e0963a2b2f40a7048e35e4eb4a6866ec2d015a3eb973",
+      "image": {
+        "name": "attest_base:latest"
+      }
+    }
+  },
+  "policy": {
+    "policy_id": "candidate-28e005395ea6b8720012b3b091d826e4",
+    "policy_version": "1.0.0",
+    "ruleset_hash": "sha256:08be1eeb926c913ced802f618f9b9e7e9795096de842034d4c7f6f7e4d4c900d",
+    "forbidden_exec": [
+      {
+        "sha256": "sha256:f211b442bfb2eb20e4d6d7c0593b34ec421a5bcd630873c69ed7aaedeea28a26",
+        "comment": "/home/dev/.vscode-server/extensions/openai.chatgpt-0.4.76-linux-arm64/bin/linux-aarch64/codex"
+      }
+    ],
+    "forbidden_writers": [
+      {
+        "sha256": "sha256:f211b442bfb2eb20e4d6d7c0593b34ec421a5bcd630873c69ed7aaedeea28a26",
+        "comment": "/home/dev/.vscode-server/extensions/openai.chatgpt-0.4.76-linux-arm64/bin/linux-aarch64/codex"
+      }
+    ]
+  },
+  "audit_summary": {
+    "window": {
+      "start_rfc3339": "2026-02-22T09:51:43Z",
+      "end_rfc3339": "2026-02-22T09:56:44Z"
+    },
+    "exec_observed": {
+      "count": 1438,
+      "forbidden_seen": 1,
+      "identity_unresolved": 19,
+      "identity_unresolved_hints": [
+        "pid=318769 comm=tokio-runtime-w fn=/home/dev/.codex/tmp/arg0/codex-arg09YmlgZ/lsb_release",
+        "pid=318775 comm=tokio-runtime-w fn=/home/dev/.codex/tmp/arg0/codex-arg09YmlgZ/lsb_release",
+        "pid=318785 comm=tokio-runtime-w fn=/home/dev/.codex/tmp/arg0/codex-arg09YmlgZ/lsb_release",
+        "pid=318831 comm=tokio-runtime-w fn=/home/dev/.codex/tmp/arg0/codex-arg09YmlgZ/lsb_release",
+        "pid=318894 comm=tokio-runtime-w fn=/home/dev/.codex/tmp/arg0/codex-arg09YmlgZ/lsb_release",
+        "pid=318894 comm=tokio-runtime-w fn=/home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/bin/remote-cli/lsb_release",
+        "pid=318894 comm=tokio-runtime-w fn=/usr/local/sbin/lsb_release",
+        "pid=318894 comm=tokio-runtime-w fn=/usr/local/bin/lsb_release"
+      ]
+    },
+    "executed_identities": [
+      {
+        "sha256": "sha256:0af0ba9ebed6f3e93d4ba44f897831687e4595545a084d8af74eddbca31ea178",
+        "inode": 2566,
+        "dev": 2050,
+        "path_hint": "/usr/bin/tr"
+      },
+      {
+        "sha256": "sha256:0b3c9b95118dbb6c31848729f708607cdc696631a2a9cb33fe65164b1c169f38",
+        "inode": 2304,
+        "dev": 2050,
+        "path_hint": "/usr/bin/readlink"
+      },
+      {
+        "sha256": "sha256:12d09f922c013d07b62cca4fda15a567d94133b196c23193784f1725562ad754",
+        "inode": 1598,
+        "dev": 2050,
+        "path_hint": "/etc/update-motd.d/50-motd-news"
+      },
+      {
+        "sha256": "sha256:1a00ba97fa8878c4e9a6e728eca3c6765ca8a31f33f55726f3571d5fb95601da",
+        "inode": 2005,
+        "dev": 2050,
+        "path_hint": "/usr/bin/gzip"
+      },
+      {
+        "sha256": "sha256:1ae5e306bce2eca707ff5cd25ede118b24a80ca85cd85a6eb7d658d81abd3dfa",
+        "inode": 2466,
+        "dev": 2050,
+        "path_hint": "/usr/bin/sleep"
+      },
+      {
+        "sha256": "sha256:1ba802f8ef74870f12d8a59460a37c68ffa742e0c0c21d847d7d580e8941f01f",
+        "inode": 2161,
+        "dev": 2050,
+        "path_hint": "/usr/bin/mv"
+      },
+      {
+        "sha256": "sha256:26b759d8838d10b0ad5bd0142f004f8b1ae94b32664834f9fa0cc4f21bc815b7",
+        "inode": 1794,
+        "dev": 2050,
+        "path_hint": "/usr/bin/cat"
+      },
+      {
+        "sha256": "sha256:26ce6cceb17ac710ee7253c49ea825c618d4f9e49a135d52b4edce336c40f620",
+        "inode": 8474407,
+        "dev": 1048687,
+        "path_hint": "/home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/node_modules/@vscode/ripgrep/bin/rg"
+      },
+      {
+        "sha256": "sha256:2bfe7e6f1939a446c2a4d21998202a247ce58edb1890e10d97b633a91e5a71b5",
+        "inode": 8472292,
+        "dev": 1048687,
+        "path_hint": "/home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/out/vs/base/node/cpuUsage.sh"
+      },
+      {
+        "sha256": "sha256:2c47e631f2396bdc1f0a6a2ca2a6779e1d21be3193388ceb5bc7aa87660d9c1e",
+        "inode": 7444,
+        "dev": 2050,
+        "path_hint": "/usr/lib/openssh/sftp-server"
+      },
+      {
+        "sha256": "sha256:31914bd93c191e2d6d81d3aac3ce4cfec21d83679708babc760c42d20e7c4f94",
+        "inode": 2647,
+        "dev": 2050,
+        "path_hint": "/usr/bin/wc"
+      },
+      {
+        "sha256": "sha256:385052662d7d365d8b47810670d4bc0af0f48c0f5564786a5bc1b819be2dcb06",
+        "inode": 1746,
+        "dev": 2050,
+        "path_hint": "/usr/bin/basename"
+      },
+      {
+        "sha256": "sha256:3fa1c04e29647304817b1ffe9a7600dc80c879ea4c8a9302032799830e0c2133",
+        "inode": 30988,
+        "dev": 2050,
+        "path_hint": "/usr/bin/ps"
+      },
+      {
+        "sha256": "sha256:484188f4b37b4021998dafd1966cda1c6f8207af9aee3ad51746a5d22acf3e65",
+        "inode": 2096,
+        "dev": 2050,
+        "path_hint": "/bin/lsb_release"
+      },
+      {
+        "sha256": "sha256:4acc7a0b3ba8b47f613257b1a806ca9f39c0d1ac261a1be48385ea41116a77de",
+        "inode": 1881,
+        "dev": 2050,
+        "path_hint": "/usr/bin/dircolors"
+      },
+      {
+        "sha256": "sha256:4ae6774eca121005b8e6187616ba675f9af7abdda20818e3df55c1539711e241",
+        "inode": 2315,
+        "dev": 2050,
+        "path_hint": "/usr/bin/rm"
+      },
+      {
+        "sha256": "sha256:59e7cf8b9bd8711ae1aa6f7bbbd4132b61492409c3afe8e1505225efda1cb8f6",
+        "inode": 2653,
+        "dev": 2050,
+        "path_hint": "/usr/bin/which"
+      },
+      {
+        "sha256": "sha256:5bc98edd0cb44aed9262bd2110d9ac3572f4b64a3a8fa1f7127c9933b0a05d9c",
+        "inode": 1729,
+        "dev": 2050,
+        "path_hint": "/usr/local/bin/attested"
+      },
+      {
+        "sha256": "sha256:62dbbc4da520c1b2923a862487e68714542f364bd600ea3a3049e9bd3ab59c5d",
+        "inode": 8474385,
+        "dev": 1048687,
+        "path_hint": "/home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/node_modules/@vscode/vsce-sign/bin/vsce-sign"
+      },
+      {
+        "sha256": "sha256:76f61a0c1f44f040454835d45424d0ae740eaf1515709bbfc9b1fc4de6a8ec41",
+        "inode": 2593,
+        "dev": 2050,
+        "path_hint": "/usr/bin/uname"
+      },
+      {
+        "sha256": "sha256:7e104be971478cbf9406c8c718659473122ea8e39723f0aba27e3b28825b8274",
+        "inode": 2094,
+        "dev": 2050,
+        "path_hint": "/usr/bin/ls"
+      },
+      {
+        "sha256": "sha256:867ff0dfd2d702cfebcff6a64eee5835c928fe359b9deced92e442211362d16d",
+        "inode": 2544,
+        "dev": 2050,
+        "path_hint": "/usr/bin/tar"
+      },
+      {
+        "sha256": "sha256:875bbfa64ca563363629ce4aa4778e937e48ffc668562a798159095dcaf365be",
+        "inode": 2362,
+        "dev": 2050,
+        "path_hint": "/usr/bin/sed"
+      },
+      {
+        "sha256": "sha256:88532c9a7dc1052de42561ee7b2fbbfbc7f17ae50a824da68345926f4592cbd2",
+        "inode": 1999,
+        "dev": 2050,
+        "path_hint": "/usr/bin/groups"
+      },
+      {
+        "sha256": "sha256:8b93b575ba20149573f8e64ed7c3e43e44de44b439dbebf9df87997ec1b4a719",
+        "inode": 1804,
+        "dev": 2050,
+        "path_hint": "/usr/bin/chmod"
+      },
+      {
+        "sha256": "sha256:93fd34381ad0ba02987818df0f4e6dfdf47d3a606ffd28749e8df48aedde5a68",
+        "inode": 2071,
+        "dev": 2050,
+        "path_hint": "/usr/bin/lesspipe"
+      },
+      {
+        "sha256": "sha256:9506bcf988e064657688589bea0f2c32fa766bf6041c049f5b8c8b877cd8ec37",
+        "inode": 1884,
+        "dev": 2050,
+        "path_hint": "/usr/bin/dirname"
+      },
+      {
+        "sha256": "sha256:968cabe8efed72fd8fd482cb76b6084fcb695fc5293af7fb62296b02f487fb69",
+        "inode": 8475245,
+        "dev": 1048687,
+        "path_hint": "/home/dev/.vscode-server/extensions/openai.chatgpt-0.4.76-linux-arm64/bin/linux-aarch64/rg"
+      },
+      {
+        "sha256": "sha256:9d3b4c4c9f60e389062e77b22493316123b92ff19327d30437e5e4583933a738",
+        "inode": 2542,
+        "dev": 2050,
+        "path_hint": "/usr/bin/tail"
+      },
+      {
+        "sha256": "sha256:a0bf35fb6e8053a4b9026090016d0e8d1e870705cde7c9f750d58445c4aa700d",
+        "inode": 2330,
+        "dev": 2050,
+        "path_hint": "/usr/bin/run-parts"
+      },
+      {
+        "sha256": "sha256:a241b34559d0bf762359bdc120babccab6873b8e97b0fae206523fac30126f1e",
+        "inode": 5921,
+        "dev": 2050,
+        "path_hint": "/usr/bin/ldd"
+      },
+      {
+        "sha256": "sha256:aa6540695d076182256dd6e96c8b302e4d56381e3000bbfd5c71bbdfe94a4942",
+        "inode": 10999,
+        "dev": 2050,
+        "path_hint": "/usr/bin/git"
+      },
+      {
+        "sha256": "sha256:aa6540695d076182256dd6e96c8b302e4d56381e3000bbfd5c71bbdfe94a4942",
+        "inode": 11002,
+        "dev": 2050,
+        "path_hint": "/usr/lib/git-core/git"
+      },
+      {
+        "sha256": "sha256:abce017cc2ad649b9e8407eefdb3d6219d3cc7e9a35d47f6eea86e41ea0af43c",
+        "inode": 2143,
+        "dev": 2050,
+        "path_hint": "/usr/bin/mkdir"
+      },
+      {
+        "sha256": "sha256:af955ef55333c8fc9c5aa50df91ad1a629d9a79a9afa125cd5e9629585f78015",
+        "inode": 1748,
+        "dev": 2050,
+        "path_hint": "/bin/bash"
+      },
+      {
+        "sha256": "sha256:b5bcad68e567f13e111d24b5dc9a7abc544b4dc81c4817ab5518789461581ac6",
+        "inode": 8471503,
+        "dev": 1048687,
+        "path_hint": "/home/dev/.vscode-server/code-072586267e68ece9a47aa43f8c108e0dcbf44622"
+      },
+      {
+        "sha256": "sha256:bec5950dc8bd999881076b8e5bb2be1cbe45e9f7847d4110ee76fc490dc5d616",
+        "inode": 5135,
+        "dev": 2050,
+        "path_hint": "/usr/bin/getconf"
+      },
+      {
+        "sha256": "sha256:bfd5df90c7f070feab584435f106f254ffffaa268a04de5b5c3bd61d59c092f3",
+        "inode": 10387,
+        "dev": 2050,
+        "path_hint": "/sbin/ldconfig"
+      },
+      {
+        "sha256": "sha256:c7507963900c83fffa7ca018c5ab28c79804e9f4736ef67e4cbf263acbc82376",
+        "inode": 48430,
+        "dev": 2050,
+        "path_hint": "/usr/sbin/sshd"
+      },
+      {
+        "sha256": "sha256:c883d9c27228339580994a1d0ea960645368c7d1b960a712bd0c655860c2d0d7",
+        "inode": 1849,
+        "dev": 2050,
+        "path_hint": "/bin/sh"
+      },
+      {
+        "sha256": "sha256:c8c89c91b842b5852dea0863836e24d38fec55c263a5b4377e54b40886a1cdb9",
+        "inode": 8471574,
+        "dev": 1048687,
+        "path_hint": "/home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/node"
+      },
+      {
+        "sha256": "sha256:cd78fb665cee82bf4c561fe4992e954a78301f6b91a5ad9af80753bf96bd1658",
+        "inode": 1954,
+        "dev": 2050,
+        "path_hint": "/usr/bin/awk"
+      },
+      {
+        "sha256": "sha256:d1f54612dda30258f1ff887f3ce6068479d88a188176da200c9f608e249f3134",
+        "inode": 1595,
+        "dev": 2050,
+        "path_hint": "/etc/update-motd.d/00-header"
+      },
+      {
+        "sha256": "sha256:db2758b407abf39d6efda276347d2e6203799952ba43b842c2e7d18e35700875",
+        "inode": 1850,
+        "dev": 2050,
+        "path_hint": "/usr/bin/date"
+      },
+      {
+        "sha256": "sha256:dc3a00a8bbe51dad1e958d6c5f73a59a6ed61a9e37acec36a78a1e817e5cadd4",
+        "inode": 1596,
+        "dev": 2050,
+        "path_hint": "/etc/update-motd.d/10-help-text"
+      },
+      {
+        "sha256": "sha256:e0cf7e677aa546fad67b1579ca1cabb9364caebf7988a59018d0a4e8376cefe7",
+        "inode": 1920,
+        "dev": 2050,
+        "path_hint": "/usr/bin/env"
+      },
+      {
+        "sha256": "sha256:e1dc5ce642b5de0eb7c0c20d3362fd7c9d1748befed8695586f59626108abbd9",
+        "inode": 5517798,
+        "dev": 1048687,
+        "path_hint": "/etc/update-motd.d/60-unminimize"
+      },
+      {
+        "sha256": "sha256:e70291f7cb9dfc5d6a4182a364582a5941cd4845c9416729dd9e47994ba26575",
+        "inode": 2085,
+        "dev": 2050,
+        "path_hint": "/usr/bin/locale-check"
+      },
+      {
+        "sha256": "sha256:ee2d5f97c1dbc39fc28f66383e173ffae55420512ec0f420ff46758e2f1111c9",
+        "inode": 8472282,
+        "dev": 1048687,
+        "path_hint": "/home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/bin/code-server"
+      },
+      {
+        "sha256": "sha256:f211b442bfb2eb20e4d6d7c0593b34ec421a5bcd630873c69ed7aaedeea28a26",
+        "inode": 8475246,
+        "dev": 1048687,
+        "path_hint": "/home/dev/.vscode-server/extensions/openai.chatgpt-0.4.76-linux-arm64/bin/linux-aarch64/codex"
+      },
+      {
+        "sha256": "sha256:f2a4948219b81a153d8cafe85383acb2f734cdccac00b633891da1cc8532f8f9",
+        "inode": 10389,
+        "dev": 2050,
+        "path_hint": "/sbin/ldconfig.real"
+      },
+      {
+        "sha256": "sha256:fb7efa5f6b958b44258b08ab860b086aaa0446b8b50564b3d43367b2ba4ed407",
+        "inode": 1993,
+        "dev": 2050,
+        "path_hint": "/usr/bin/grep"
+      }
+    ],
+    "workspace_writes_observed": {
+      "count": 9,
+      "by_op": {
+        "open_write": 9
+      },
+      "forbidden_writer_seen": 1
+    },
+    "writer_identities": [
+      {
+        "sha256": "sha256:5bc98edd0cb44aed9262bd2110d9ac3572f4b64a3a8fa1f7127c9933b0a05d9c",
+        "inode": 1729,
+        "dev": 2050,
+        "path_hint": "/usr/local/bin/attested"
+      },
+      {
+        "sha256": "sha256:aa6540695d076182256dd6e96c8b302e4d56381e3000bbfd5c71bbdfe94a4942",
+        "inode": 10999,
+        "dev": 2050,
+        "path_hint": "/usr/bin/git"
+      },
+      {
+        "sha256": "sha256:aa6540695d076182256dd6e96c8b302e4d56381e3000bbfd5c71bbdfe94a4942",
+        "inode": 11002,
+        "dev": 2050,
+        "path_hint": "/usr/lib/git-core/git"
+      },
+      {
+        "sha256": "sha256:f211b442bfb2eb20e4d6d7c0593b34ec421a5bcd630873c69ed7aaedeea28a26",
+        "inode": 8475246,
+        "dev": 1048687,
+        "path_hint": "/home/dev/.vscode-server/extensions/openai.chatgpt-0.4.76-linux-arm64/bin/linux-aarch64/codex"
+      }
+    ]
+  },
+  "integrity": {
+    "event_root": "6e22c22ea7e6b1d84fa6925b6d7bb52128722621117ef4649f3301eda8f83d8e",
+    "event_root_alg": "hash_chain_sha256",
+    "event_count": 1447,
+    "collector_log_id": "ebpf-lsm:28e005395ea6b8720012b3b091d826e4"
+  },
+  "conclusion": {
+    "pass": false,
+    "reasons": [
+      {
+        "code": "FORBIDDEN_EXEC_SEEN",
+        "detail": "count=1 samples=[sha256:f211b442b(/home/dev/.vscode-server/extensions/openai.chatgpt-0.4.76-linux-arm64/bin/linux-aarch64/codex)]"
+      },
+      {
+        "code": "FORBIDDEN_WRITER_SEEN",
+        "detail": "count=1 samples=[sha256:f211b442b(/home/dev/.vscode-server/extensions/openai.chatgpt-0.4.76-linux-arm64/bin/linux-aarch64/codex)]"
+      }
+    ]
+  },
+  "issued_at": "2026-02-22T09:59:07Z",
+  "issuer": {
+    "name": "sandbox-attestor",
+    "key_id": "sandbox-key-1",
+    "method": "ed25519"
+  }
+}

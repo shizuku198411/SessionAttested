@@ -1,0 +1,11 @@
+# source: /home/<HOST_USER>/code/session-attested/sandbox/.attest_run/state/sessions/28e005395ea6b8720012b3b091d826e4/audit_summary.json
+# session_id: 28e005395ea6b8720012b3b091d826e4
+policy_id: candidate-28e005395ea6b8720012b3b091d826e4
+policy_version: 1.0.0
+forbidden_exec:
+    - sha256: sha256:f211b442bfb2eb20e4d6d7c0593b34ec421a5bcd630873c69ed7aaedeea28a26
+      comment: /home/dev/.vscode-server/extensions/openai.chatgpt-0.4.76-linux-arm64/bin/linux-aarch64/codex
+forbidden_writers:
+    - sha256: sha256:f211b442bfb2eb20e4d6d7c0593b34ec421a5bcd630873c69ed7aaedeea28a26
+      comment: /home/dev/.vscode-server/extensions/openai.chatgpt-0.4.76-linux-arm64/bin/linux-aarch64/codex
+exceptions: []

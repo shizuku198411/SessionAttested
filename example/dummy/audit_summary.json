@@ -1,0 +1,6 @@
+{
+  "window": { "start_rfc3339": "2026-02-21T00:00:00Z", "end_rfc3339": "2026-02-21T00:10:00Z" },
+  "exec_observed": { "count": 0, "forbidden_seen": 0 },
+  "workspace_writes_observed": { "count": 0 },
+  "writer_identities": []
+}

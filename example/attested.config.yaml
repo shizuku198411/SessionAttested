@@ -1,0 +1,50 @@
+defaults:
+  state_dir: /tmp/agentless_attest/state
+
+commands:
+  start:
+    image: ubuntu:24.04
+    pull: true
+    build: false
+    dockerfile: Dockerfile
+    auto_collect: false
+    auto_collect_sudo: true
+    # auto_collect_wait: 5s
+    # auto_collect_log: /absolute/path/to/collector.log
+    inject_session_env: true
+    # mount_attested_bin: true
+    # attested_bin_host_path: /absolute/path/to/attested
+    # attested_bin_container_path: /usr/local/bin/attested
+    # git_user_name: Your Name
+    # git_user_email: you@example.com
+    # git_ssh_key_host_path: /absolute/path/to/id_ed25519
+    # git_ssh_key_container_path: /home/dev/.ssh/id_github_attested
+    # build_arg:
+    #   - "DEV_UID=1000"
+    #   - "DEV_GID=1000"
+    # build_context: /absolute/path/to/build-context
+    # publish:
+    #   - "127.0.0.1:2222:22/tcp"
+    workspace_host: /absolute/path/to/workspace
+  collect:
+    until_stop: true
+    poll: 300ms
+  stop:
+    collector_wait: 20s
+    # run_attest: true
+    # run_verify: true
+    # verify_write_result: true
+  commit:
+    repo_path: /absolute/path/to/workspace
+    message: "attested session commit"
+  attest:
+    repo: your-org/your-repo
+    policy: /absolute/path/to/policy.yaml
+    out: /tmp/agentless_attest/attestations/latest
+    signing_key: /tmp/agentless_attest/keys/attestation_priv.pem
+    key_id: key-1
+    issuer_name: local-attestor
+    use_binding: true
+  verify:
+    policy: /absolute/path/to/policy.yaml
+    require_pass: true

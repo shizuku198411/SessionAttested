@@ -1,0 +1,6 @@
+{
+  "session_id": "demo",
+  "started_at": "2026-02-21T00:00:00Z",
+  "workspace": { "host_path": "/var/lib/attested-workspaces/demo", "container_path": "/workspace" },
+  "docker": { "container_id": "dummy", "image": "dummy:latest" }
+}

@@ -1,0 +1,316 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/attestation.schema.json",
+  "title": "Non-Agent-Write Attestation",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "attestation_type",
+    "subject",
+    "session",
+    "environment",
+    "policy",
+    "audit_summary",
+    "integrity",
+    "conclusion",
+    "issued_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+$",
+      "description": "Schema version of this attestation document (e.g. 1.0)"
+    },
+    "attestation_type": {
+      "type": "string",
+      "const": "non_agent_direct_write",
+      "description": "Fixed attestation type for this project"
+    },
+    "subject": {
+      "type": "object",
+      "required": ["repo", "commit_sha"],
+      "additionalProperties": false,
+      "properties": {
+        "repo": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Repository identifier (e.g. owner/name)"
+        },
+        "commit_sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}$",
+          "description": "Git commit SHA-1 (PoC assumes SHA-1)"
+        },
+        "ref": {
+          "type": "string",
+          "description": "Optional ref name (branch/tag)"
+        }
+      }
+    },
+    "session": {
+      "type": "object",
+      "required": ["session_id", "workspace"],
+      "additionalProperties": false,
+      "properties": {
+        "session_id": {
+          "type": "string",
+          "minLength": 8,
+          "description": "Issued session identifier (UUID recommended)"
+        },
+        "workspace": {
+          "type": "object",
+          "required": ["host_path", "container_path"],
+          "additionalProperties": false,
+          "properties": {
+            "host_path": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Host absolute path for the workspace"
+            },
+            "container_path": {
+              "type": "string",
+              "const": "/workspace",
+              "description": "Container mount path (fixed for PoC)"
+            }
+          }
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "required": ["mode", "collector", "developer_container"],
+      "additionalProperties": false,
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["docker_poc", "k8s_managed"],
+          "description": "Execution mode; PoC uses docker_poc"
+        },
+        "collector": {
+          "type": "object",
+          "required": ["name", "version", "node_id"],
+          "additionalProperties": false,
+          "properties": {
+            "name": { "type": "string", "minLength": 1 },
+            "version": { "type": "string", "minLength": 1 },
+            "node_id": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Host/node identifier where collector ran"
+            },
+            "kernel": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "release": { "type": "string" },
+                "build_id": { "type": "string", "description": "Optional kernel build-id" }
+              }
+            }
+          }
+        },
+        "developer_container": {
+          "type": "object",
+          "required": ["runtime", "container_id", "image"],
+          "additionalProperties": false,
+          "properties": {
+            "runtime": {
+              "type": "string",
+              "enum": ["docker", "containerd"],
+              "description": "PoC assumes docker"
+            },
+            "container_id": {
+              "type": "string",
+              "minLength": 8,
+              "description": "Container ID (short/long allowed)"
+            },
+            "image": {
+              "type": "object",
+              "required": ["name"],
+              "additionalProperties": false,
+              "properties": {
+                "name": { "type": "string", "minLength": 1 },
+                "digest": {
+                  "type": "string",
+                  "pattern": "^sha256:[0-9a-f]{64}$",
+                  "description": "Recommended; immutable image digest"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "required": ["policy_id", "policy_version", "ruleset_hash"],
+      "additionalProperties": false,
+      "properties": {
+        "policy_id": { "type": "string", "minLength": 1 },
+        "policy_version": { "type": "string", "minLength": 1 },
+        "ruleset_hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "Digest of canonical policy yaml"
+        },
+        "forbidden_exec": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/executableFingerprint" },
+          "description": "Optional inline snapshot of forbidden fingerprints"
+        },
+        "allowed_writers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/executableFingerprint" },
+          "description": "Optional inline snapshot of allowed writer fingerprints"
+        }
+      }
+    },
+    "audit_summary": {
+      "type": "object",
+      "required": [
+        "window",
+        "exec_observed",
+        "workspace_writes_observed",
+        "writer_identities"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "window": {
+          "type": "object",
+          "required": ["start_rfc3339", "end_rfc3339"],
+          "additionalProperties": false,
+          "properties": {
+            "start_rfc3339": { "type": "string", "format": "date-time" },
+            "end_rfc3339": { "type": "string", "format": "date-time" }
+          }
+        },
+        "exec_observed": {
+          "type": "object",
+          "required": ["count"],
+          "additionalProperties": false,
+          "properties": {
+            "count": { "type": "integer", "minimum": 0 },
+            "forbidden_seen": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "workspace_writes_observed": {
+          "type": "object",
+          "required": ["count"],
+          "additionalProperties": false,
+          "properties": {
+            "count": { "type": "integer", "minimum": 0 },
+            "by_op": {
+              "type": "object",
+              "additionalProperties": { "type": "integer", "minimum": 0 },
+              "description": "Counts per operation (open_write, rename, unlink, create, chmod...)"
+            },
+            "forbidden_writer_seen": { "type": "integer", "minimum": 0 },
+            "unapproved_writer_seen": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "writer_identities": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/executableIdentity" },
+          "minItems": 0,
+          "description": "Unique set of executables that performed workspace writes"
+        },
+        "notes": { "type": "string" }
+      }
+    },
+    "integrity": {
+      "type": "object",
+      "required": ["event_root", "event_root_alg", "event_count"],
+      "additionalProperties": false,
+      "properties": {
+        "event_root": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "Root hash (hex) of the audit event chain/merkle"
+        },
+        "event_root_alg": {
+          "type": "string",
+          "enum": ["hash_chain_sha256", "merkle_sha256"],
+          "description": "Aggregation algorithm"
+        },
+        "event_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Total number of events included in root"
+        },
+        "collector_log_id": { "type": "string" }
+      }
+    },
+    "conclusion": {
+      "type": "object",
+      "required": ["pass", "reasons"],
+      "additionalProperties": false,
+      "properties": {
+        "pass": { "type": "boolean" },
+        "reasons": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/conclusionReason" },
+          "minItems": 0
+        }
+      }
+    },
+    "issued_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Time of attestation issuance"
+    },
+    "issuer": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string" },
+        "key_id": { "type": "string" },
+        "method": {
+          "type": "string",
+          "enum": ["ed25519", "kms", "tpm"]
+        }
+      }
+    }
+  },
+  "$defs": {
+    "executableFingerprint": {
+      "type": "object",
+      "required": ["sha256"],
+      "additionalProperties": false,
+      "properties": {
+        "sha256": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "comment": { "type": "string" }
+      }
+    },
+    "executableIdentity": {
+      "type": "object",
+      "required": ["sha256", "inode", "dev"],
+      "additionalProperties": false,
+      "properties": {
+        "sha256": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+        "inode": { "type": "integer", "minimum": 0 },
+        "dev": { "type": "integer", "minimum": 0 },
+        "path_hint": { "type": "string" }
+      }
+    },
+    "conclusionReason": {
+      "type": "object",
+      "required": ["code"],
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "OK",
+            "FORBIDDEN_EXEC_SEEN",
+            "FORBIDDEN_WRITER_SEEN",
+            "UNAPPROVED_WRITER_SEEN",
+            "AUDIT_GAP_DETECTED",
+            "INTEGRITY_MISMATCH",
+            "POLICY_MISMATCH"
+          ]
+        },
+        "detail": { "type": "string" }
+      }
+    }
+  }
+}

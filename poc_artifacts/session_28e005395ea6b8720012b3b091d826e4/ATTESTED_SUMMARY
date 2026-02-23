@@ -1,0 +1,22 @@
+[
+  {
+    "attestation_pass": false,
+    "commit_sha": [
+      "3a1e62a00e3640b6e65cf1620c85a2dc23beef76"
+    ],
+    "commit_url": [
+      "https://github.com/shizuku198411/sandbox/commit/3a1e62a00e3640b6e65cf1620c85a2dc23beef76"
+    ],
+    "policy_checked": true,
+    "policy_id": "candidate-28e005395ea6b8720012b3b091d826e4",
+    "policy_match": true,
+    "policy_path": "/home/<HOST_USER>/code/session-attested/sandbox/.attest_run/policy.sandbox.yaml",
+    "policy_version": "1.0.0",
+    "reason": "FORBIDDEN_EXEC_SEEN: count=1 samples=[sha256:f211b442b(/home/dev/.vscode-server/extensions/openai.chatgpt-0.4.76-linux-arm64/bin/linux-aarch64/codex)]",
+    "repo": "shizuku198411/sandbox",
+    "ruleset_hash": "sha256:08be1eeb926c913ced802f618f9b9e7e9795096de842034d4c7f6f7e4d4c900d",
+    "session_id": "28e005395ea6b8720012b3b091d826e4",
+    "timestamp": "2026-02-22T09:59:14Z",
+    "verify_ok": false
+  }
+]

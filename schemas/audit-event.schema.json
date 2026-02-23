@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/audit-event.schema.json",
+  "title": "Audit Event",
+  "type": "object",
+  "oneOf": [
+    { "$ref": "#/$defs/execEvent" },
+    { "$ref": "#/$defs/workspaceWriteEvent" }
+  ],
+  "$defs": {
+    "common": {
+      "type": "object",
+      "required": [
+        "event_version",
+        "event_type",
+        "ts_rfc3339",
+        "seq",
+        "host",
+        "process"
+      ],
+      "properties": {
+        "event_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+$",
+          "description": "Event schema version"
+        },
+        "event_type": { "type": "string", "minLength": 1 },
+        "ts_rfc3339": { "type": "string", "format": "date-time" },
+        "seq": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Monotonic sequence number from collector"
+        },
+        "host": {
+          "type": "object",
+          "required": ["node_id"],
+          "additionalProperties": false,
+          "properties": { "node_id": { "type": "string", "minLength": 1 } }
+        },
+        "session": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": { "session_id": { "type": "string" } }
+        },
+        "container": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "runtime": { "type": "string", "enum": ["docker", "containerd"] },
+            "container_id": { "type": "string" },
+            "cgroup_id": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "process": {
+          "type": "object",
+          "required": ["pid", "ppid", "exe"],
+          "additionalProperties": false,
+          "properties": {
+            "pid": { "type": "integer", "minimum": 0 },
+            "ppid": { "type": "integer", "minimum": 0 },
+            "exe": { "$ref": "#/$defs/executableIdentity" },
+            "argv_hash": {
+              "type": "string",
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "description": "Optional: hash of argv after masking"
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "executableIdentity": {
+      "type": "object",
+      "required": ["inode", "dev"],
+      "additionalProperties": false,
+      "properties": {
+        "inode": { "type": "integer", "minimum": 0 },
+        "dev": { "type": "integer", "minimum": 0 },
+        "sha256": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "Collector may fill this later"
+        },
+        "path_hint": { "type": "string" }
+      }
+    },
+    "fileIdentity": {
+      "type": "object",
+      "required": ["inode", "dev"],
+      "additionalProperties": false,
+      "properties": {
+        "inode": { "type": "integer", "minimum": 0 },
+        "dev": { "type": "integer", "minimum": 0 },
+        "path_hint": { "type": "string" }
+      }
+    },
+    "execEvent": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/common" },
+        {
+          "type": "object",
+          "required": ["event_type"],
+          "properties": { "event_type": { "const": "exec" } },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "workspaceWriteEvent": {
+      "type": "object",
+      "allOf": [
+        { "$ref": "#/$defs/common" },
+        {
+          "type": "object",
+          "required": ["event_type", "write"],
+          "properties": {
+            "event_type": { "const": "workspace_write" },
+            "write": {
+              "type": "object",
+              "required": ["op", "target"],
+              "additionalProperties": false,
+              "properties": {
+                "op": {
+                  "type": "string",
+                  "enum": ["open_write", "create", "rename", "unlink", "chmod", "truncate"]
+                },
+                "target": { "$ref": "#/$defs/fileIdentity" },
+                "extra": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "description": "Optional fields for richer hooks (e.g., rename src/dst)"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

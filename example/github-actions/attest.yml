@@ -1,0 +1,80 @@
+name: Verify And Publish Attestation (Template)
+
+on:
+  workflow_dispatch:
+    inputs:
+      attestation_dir:
+        description: "Directory containing attestation.json/.sig/.pub"
+        required: true
+        default: "attestations/latest"
+      policy_path:
+        description: "Optional policy path for ruleset_hash verification"
+        required: false
+        default: ""
+      binding_path:
+        description: "Optional commit_binding.json path"
+        required: false
+        default: ""
+      require_pass:
+        description: "Fail when attestation conclusion.pass is false"
+        required: false
+        default: "true"
+
+jobs:
+  verify-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build CLI
+        run: go build -o ./bin/attested ./cmd/attested
+
+      - name: Verify attestation files exist
+        shell: bash
+        run: |
+          set -euo pipefail
+          DIR="${{ github.event.inputs.attestation_dir }}"
+          test -f "$DIR/attestation.json"
+          test -f "$DIR/attestation.sig"
+          test -f "$DIR/attestation.pub"
+
+      - name: Verify attestation
+        shell: bash
+        run: |
+          set -euo pipefail
+          DIR="${{ github.event.inputs.attestation_dir }}"
+          ARGS=(
+            --attestation "$DIR/attestation.json"
+            --signature "$DIR/attestation.sig"
+            --public-key "$DIR/attestation.pub"
+            --require-pass="${{ github.event.inputs.require_pass }}"
+          )
+          if [[ -n "${{ github.event.inputs.policy_path }}" ]]; then
+            ARGS+=(--policy "${{ github.event.inputs.policy_path }}")
+          fi
+          if [[ -n "${{ github.event.inputs.binding_path }}" ]]; then
+            ARGS+=(--binding "${{ github.event.inputs.binding_path }}")
+          fi
+          ./bin/attested verify "${ARGS[@]}"
+
+      - name: Upload attestation artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: attestation-${{ github.run_id }}
+          path: |
+            ${{ github.event.inputs.attestation_dir }}/attestation.json
+            ${{ github.event.inputs.attestation_dir }}/attestation.sig
+            ${{ github.event.inputs.attestation_dir }}/attestation.pub
+
+      - name: Upload commit binding artifact
+        if: ${{ github.event.inputs.binding_path != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: commit-binding-${{ github.run_id }}
+          path: ${{ github.event.inputs.binding_path }}

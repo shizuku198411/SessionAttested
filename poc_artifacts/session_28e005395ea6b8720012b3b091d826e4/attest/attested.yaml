@@ -1,0 +1,52 @@
+defaults:
+  state_dir: /sandbox/.attest_run/state
+
+commands:
+  start:
+    image: attest_base:latest
+    pull: false
+    build: true
+    dockerfile: Dockerfile
+    auto_collect: true
+    auto_collect_sudo: true
+    auto_collect_wait: 10s
+    inject_session_env: true
+    mount_attested_bin: true
+    attested_bin_container_path: /usr/local/bin/attested
+    git_user_name: "<GIT_USER>"
+    git_user_email: "<GIT_EMAIL>"
+    git_ssh_key_host_path: /home/<HOST_USER>/.ssh/id_rsa
+    git_ssh_key_container_path: /home/dev/.ssh/id_github_attested
+    build_arg:
+      - "DEV_UID=1000"
+      - "DEV_GID=1003"
+    publish:
+      - "0.0.0.0:2222:22/tcp"
+    workspace_host: /sandbox
+
+  collect:
+    until_stop: true
+    poll: 300ms
+  
+  stop:
+    collector_wait: 20s
+    #run_attest: true
+    #run_verify: true
+    #verify_write_result: true
+  
+  commit:
+    repo_path: /sandbox
+    message: "sandbox: attested flow"
+  
+  attest:
+    repo: shizuku198411/sandbox
+    policy: /sandbox/.attest_run/policy.sandbox.yaml
+    out: /sandbox/.attest_run/attestations/latest
+    signing_key: /sandbox/.attest_run/keys/attestation_priv.pem
+    key_id: sandbox-key-1
+    issuer_name: sandbox-attestor
+    use_binding: true
+  
+  verify:
+    policy: /sandbox/.attest_run/policy.sandbox.yaml
+    require_pass: true
