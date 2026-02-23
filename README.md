@@ -6,11 +6,11 @@
 ![Status](https://img.shields.io/badge/status-PoC-orange)
 
 
-English docs for SessionAttested. For the Japanese original, see [`docs/jp/README.md`](docs/jp/README.md).
+English docs for SessionAttested. For the Japanese version, see [`docs/jp/README.md`](docs/jp/README.md).
 
-**SessionAttested** is a PoC that observes, from the host side (LSM/eBPF), which processes were executed and which executable identities wrote to a development workspace during a session, then binds the result to commits and outputs a signed attestation.
+**SessionAttested** is a **policy-based development-session attestation framework** that observes, from the host side (LSM/eBPF), which processes were executed and which executable identities wrote to a development workspace during a session, then binds the result to commits and outputs a signed attestation.
 
-It can be used as a **policy-based development session audit / attestation foundation**.
+It can be used as a foundation for verifiable development-session auditing and policy enforcement workflows.
 
 ## Status
 

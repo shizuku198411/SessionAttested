@@ -3,10 +3,10 @@
 [日本語](./POC_EXAMPLE_CODEX_SESSION.md) | [English](../../POC_EXAMPLE_CODEX_SESSION.md)
 
 
-このドキュメントは、`SessionAttested` の PoC 実行例として、Codex による書き込みを含むセッションの監査ログ/集約結果/attestation 結果をまとめたものです。
+このドキュメントは、`SessionAttested` の PoC 実行例として、Codex による書き込みを含むセッションの監査ログ/集約結果/署名付き証明の結果をまとめたものです。
 
 - Session ID: `28e005395ea6b8720012b3b091d826e4`
-- 目的: `forbidden_exec` / `forbidden_writers` により、Codex 実行を検知して `attestation pass=false` となることを確認する
+- 目的: `forbidden_exec` / `forbidden_writers` により、Codex 実行を検知して証明結果が `pass=false` となることを確認する
 - 結果: 想定どおり `fail`
 
 ## 1. 前提と実施内容
@@ -154,7 +154,7 @@ attest/verify 結果:
 
 - dev container 内の `exec` / `workspace write` を監査ログとして取得できる
 - VS Code 拡張配下の Codex 実行体を fingerprint 付きで集約できる
-- policy (`forbidden_exec`, `forbidden_writers`) により `attestation pass=false` を再現できる
+- policy (`forbidden_exec`, `forbidden_writers`) により証明結果 `pass=false` を再現できる
 - `verify` 結果を `ATTESTED_SUMMARY` に残せる
 
 ## 10. PoC実行手順
@@ -268,7 +268,7 @@ exceptions: []
 -> Policy候補が作成されるため、`Codex`をforbidden exec/writerに登録
 8. 評価  
 `attested attest --config ./attest/attested.yaml --session "$SESSION_ID"`  
--> `attestation pass=false`
+-> 証明結果 `pass=false`
 9. 評価結果を含む監査記録のVerify  
 `attested verify --config ./attest/attested.yaml --attestation .attest_run/attestations/latest/attestation.json --signature .attest_run/attestations/latest/attestation.sig --public-key .attest_run/attestations/latest/attestation.pub --write-result --binding ".attest_run/state/sessions/$SESSION_ID/commit_binding.json"`  
--> NG (FORBIDDEN_EXEC_SEEN: count=1 samples=[sha256:f211b442b(/home/dev/.vscode-server/extensions/openai.chatgpt-0.4.76-linux-arm64/bin/linux-aarch64/codex)]). attestation pass=false = 評価fail理由のSummaryを確認可能
+-> NG (FORBIDDEN_EXEC_SEEN: count=1 samples=[sha256:f211b442b(/home/dev/.vscode-server/extensions/openai.chatgpt-0.4.76-linux-arm64/bin/linux-aarch64/codex)]). 証明結果 `pass=false` = 評価 fail 理由の Summary を確認可能

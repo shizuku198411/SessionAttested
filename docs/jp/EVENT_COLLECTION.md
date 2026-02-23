@@ -176,7 +176,7 @@ collector finalize 時に生成するサマリ。
 - `event_count`
 - `seed`
 
-これが attestation の `event_root` として参照されます。
+これが署名付き証明（`attestation.json`）の `event_root` として参照されます。
 
 ## 9. finalize（`attested stop` 時）
 
@@ -191,7 +191,7 @@ collector finalize 時に生成するサマリ。
 - `audit_summary.json`
 - `event_root.json`
 
-この時点で、attestation 生成に必要な監査基盤データが揃います。
+この時点で、署名付き証明の生成に必要な監査基盤データが揃います。
 
 ## 10. 現時点の限界（PoC）
 

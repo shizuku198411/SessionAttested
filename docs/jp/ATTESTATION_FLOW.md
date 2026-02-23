@@ -3,7 +3,7 @@
 [日本語](./ATTESTATION_FLOW.md) | [English](../../ATTESTATION_FLOW.md)
 
 
-このドキュメントは、現時点の `SessionAttested` PoC におけるアテステーション運用フローを、
+このドキュメントは、現時点の `SessionAttested` PoC における署名付き証明の運用フローを、
 
 - `監査主体` / `被監査主体` のどちらの作業か
 - その時点で何が行われるか
@@ -22,7 +22,7 @@
   - セッション開始/終了
   - 監査 collector の制御
   - policy 生成/選定
-  - attestation 生成/verify
+  - 署名付き証明の生成/verify
 - `被監査主体`:
   - dev container 内で実装作業
   - `attested git ...` を使った Git 操作（add/commit/push）
@@ -115,7 +115,7 @@ attested stop \
 - `audit_summary.json` を生成
 - `event_root.json` を生成（hash chain）
 - （設定に応じて）コンテナ停止、または停止+削除
-- （`--run-attest` 指定時）attestation 生成
+- （`--run-attest` 指定時）署名付き証明を生成
 - （`--run-verify` 指定時）verify 実行
 
 ### 監査上の意味
@@ -150,7 +150,7 @@ attested policy candidates \
 - `.candidate` を review
 - 問題なければ rename / copy して本番ポリシーとして採用
 
-## 6. Attestation 生成（監査主体）
+## 6. 署名付き証明の生成（監査主体）
 
 ### 実行コマンド（ホスト）
 
@@ -194,7 +194,7 @@ attested verify \
 
 ### 監査上の意味
 
-- アテステーションの検証結果が監査記録として再利用可能な形で残る
+- 署名付き証明の検証結果が監査記録として再利用可能な形で残る
 
 ## 8. GitHub Artifact 連携（任意 / 監査主体 or CI）
 
