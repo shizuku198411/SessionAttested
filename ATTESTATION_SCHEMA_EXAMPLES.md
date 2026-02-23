@@ -14,6 +14,7 @@ Covered artifacts:
 - `ATTESTED`
 - `ATTESTED_SUMMARY`
 - `ATTESTED_POLICY_LAST`
+- `ATTESTED_WORKSPACE_OBSERVED`
 
 Examples are simplified excerpts.
 
@@ -133,7 +134,42 @@ Typical contents:
 - `ruleset_hash`
 - `timestamp`
 
-## 9. Compatibility Guidance
+## 9. `ATTESTED_WORKSPACE_OBSERVED`
+
+Workspace-level cumulative observed identities updated by `verify --write-result`.
+
+Unlike session-scoped artifacts, this file is intended for cross-session review of observed executables/writers and unresolved counters.
+
+```json
+{
+  "sessions_seen": ["28e005395ea6b8720012b3b091d826e4"],
+  "exec_identities": [
+    {
+      "sha256": "sha256:f211b442bfb2eb20e4d6d7c0593b34ec421a5bcd630873c69ed7aaedeea28a26",
+      "path_hint": "/home/dev/.vscode-server/extensions/openai.chatgpt.../codex",
+      "first_seen_session": "28e005395ea6b8720012b3b091d826e4",
+      "last_seen_session": "28e005395ea6b8720012b3b091d826e4",
+      "seen_count": 1
+    }
+  ],
+  "writer_identities": [],
+  "exec_identity_unresolved": 19,
+  "writer_identity_unresolved": 2
+}
+```
+
+Use it for:
+
+- reviewing tools not yet covered by policy
+- tracking what ran/wrote across the workspace over time
+- policy refinement and post-hoc audit review
+
+Note:
+
+- `ATTESTED_OBSERVED` (session-scoped observed list) is not generated in the current implementation
+- for session-level details, use `attestation.json` and `audit_summary.json`
+
+## 10. Compatibility Guidance
 
 - Prefer parsers that ignore unknown fields
 - Treat `schema`/version fields as compatibility boundaries

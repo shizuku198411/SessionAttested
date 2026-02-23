@@ -38,6 +38,11 @@ func RunStatus(args []string) int {
 		return 2
 	}
 	if *sessionID == "" {
+		if sid, ok := readLastSessionID(); ok {
+			*sessionID = sid
+		}
+	}
+	if *sessionID == "" {
 		fmt.Fprintln(os.Stderr, "error: --session is required")
 		return 2
 	}

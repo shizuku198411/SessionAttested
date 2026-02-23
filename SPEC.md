@@ -130,7 +130,7 @@ Reasoning:
 
 ## 7. Integrity Aggregation (`event_root`)
 
-The PoC adopts `event_root_alg = hash_chain_sha256`.
+The PoC adopts hash-chain-based `event_root` aggregation (SHA-256).
 
 ### 7.1 Canonical JSON
 
@@ -162,7 +162,7 @@ JSON normalization rules used for signatures and hash calculations:
   - environment (collector info, container info)
   - policy (`policy_id` / `policy_version`, `ruleset_hash`)
   - audit summary (observed counts, writer set, forbidden detections)
-  - integrity (`event_root`, algorithm, `event_count`)
+  - event root summary (`root`, `seed`, `event_count`)
   - conclusion (pass/fail + reason codes)
   - `issued_at`
 

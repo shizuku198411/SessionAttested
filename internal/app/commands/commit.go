@@ -52,6 +52,11 @@ func RunCommit(args []string) int {
 			*sessionID = sid
 		}
 	}
+	if *sessionID == "" {
+		if sid, ok := readLastSessionID(); ok {
+			*sessionID = sid
+		}
+	}
 	if *stateDir == state.DefaultStateDir().Root {
 		if s := strings.TrimSpace(os.Getenv("ATTESTED_STATE_DIR")); s != "" {
 			*stateDir = s

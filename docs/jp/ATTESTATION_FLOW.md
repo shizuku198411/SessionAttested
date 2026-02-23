@@ -32,7 +32,7 @@
 ### 実行コマンド（ホスト）
 
 ```bash
-attested start --config ./sandbox/attest/attested.yaml --json
+attested start --json
 ```
 
 ### ここで行われること
@@ -49,6 +49,7 @@ attested start --config ./sandbox/attest/attested.yaml --json
 ### 監査上の意味
 
 - 以降の `exec` / `workspace write` は `session_id` 単位で集約される
+- `start` / `stop` を繰り返すことで、同じ dev container 環境を維持したまま session を分けられる
 
 ## 2. 開発作業（被監査主体）
 
@@ -96,15 +97,13 @@ attested git push -u origin main
 ### 実行コマンド（ホスト）
 
 ```bash
-attested stop --config ./sandbox/attest/attested.yaml --session "$SESSION_ID"
+attested stop
 ```
 
 または自動連携付き:
 
 ```bash
 attested stop \
-  --config ./sandbox/attest/attested.yaml \
-  --session "$SESSION_ID" \
   --run-attest \
   --run-verify \
   --verify-write-result
@@ -115,7 +114,7 @@ attested stop \
 - collector に finalize を指示
 - `audit_summary.json` を生成
 - `event_root.json` を生成（hash chain）
-- （通常は）コンテナ停止/削除
+- （設定に応じて）コンテナ停止、または停止+削除
 - （`--run-attest` 指定時）attestation 生成
 - （`--run-verify` 指定時）verify 実行
 
@@ -129,8 +128,7 @@ attested stop \
 
 ```bash
 attested policy candidates \
-  --session "$SESSION_ID" \
-  --state-dir ./sandbox/.attest_run/state
+  --session "$SESSION_ID"
 ```
 
 必要に応じて `exec` も候補化:
@@ -138,7 +136,6 @@ attested policy candidates \
 ```bash
 attested policy candidates \
   --session "$SESSION_ID" \
-  --state-dir ./sandbox/.attest_run/state \
   --include-exec
 ```
 
@@ -158,7 +155,7 @@ attested policy candidates \
 ### 実行コマンド（ホスト）
 
 ```bash
-attested attest --config ./sandbox/attest/attested.yaml --session "$SESSION_ID"
+attested attest
 ```
 
 ### ここで行われること
@@ -181,11 +178,6 @@ attested attest --config ./sandbox/attest/attested.yaml --session "$SESSION_ID"
 
 ```bash
 attested verify \
-  --config ./sandbox/attest/attested.yaml \
-  --attestation ./sandbox/.attest_run/attestations/latest/attestation.json \
-  --signature ./sandbox/.attest_run/attestations/latest/attestation.sig \
-  --public-key ./sandbox/.attest_run/attestations/latest/attestation.pub \
-  --binding "./sandbox/.attest_run/state/sessions/$SESSION_ID/commit_binding.json" \
   --write-result
 ```
 
@@ -198,6 +190,7 @@ attested verify \
   - `ATTESTED`（マーカー）
   - `ATTESTED_SUMMARY`（session ごとの結果一覧）
   - `ATTESTED_POLICY_LAST`（指定 policy のスナップショット）
+  - `ATTESTED_WORKSPACE_OBSERVED`（workspace 累積の観測一覧）
 
 ### 監査上の意味
 
@@ -208,8 +201,8 @@ attested verify \
 ### 何をするか
 
 - 生成済みの `attestation.json/.sig/.pub` と policy / binding をリポジトリへ配置
-- GitHub Actions で `verify` を再実行
-- Artifact として公開/保管
+- GitHub Actions で Artifact として公開/保管
+- （任意）CI 側に `attested` バイナリ/実行環境がある場合は `verify` 再実行
 
 ### 監査上の意味
 
@@ -226,4 +219,3 @@ attested verify \
 
 - `exec` で禁止実行体を確実に検知する
 - `writer` は書き込み主体の状況証拠として補強に使う
-

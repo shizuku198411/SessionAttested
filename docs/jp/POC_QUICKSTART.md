@@ -58,9 +58,31 @@ git branch -M main
 
 - `git remote add origin <your-repo-url>`
 
-## 4. PoC 用ファイルを workspace に配置
+## 4. workspace 初期化（推奨）
 
-最低限必要なもの:
+最も簡単なのは、`workspace init` に scaffold 生成を任せる方法です。
+
+```bash
+attested workspace init
+```
+
+デフォルトで準備されるもの:
+
+- workspace 登録（`.attest_run/state/workspaces/...`）
+- `attest/attested.yaml`（設定雛形）
+- `attest/Dockerfile`（dev container 雛形）
+- `attest/policy.yaml`（ポリシー雛形）
+- `.gitignore`（ローカル監査成果物向け managed block）
+- dev container（作成され、停止状態で保持）
+
+補足:
+
+- 対話形式で workspace 名/パス、image、build/pull、GitHub repo、git user、SSH鍵マウントの有無などを埋められます
+- 多くのケースでは `attested.yaml` を手で用意する必要はありません
+
+## 5. PoC 用ファイルを手動で配置（任意）
+
+`workspace init` を使わず手動でセットアップしたい場合は、最低限以下を用意します。
 
 - `Dockerfile`（dev container 用）
 - `attest/attested.yaml`（PoC 設定）
@@ -91,10 +113,10 @@ cp /path/to/session-attested/example/docker/ubuntu-24.04-ssh/Dockerfile ./Docker
 - `signing_key`
 - `require_pass`
 
-## 5. セッション開始（container 起動 + collector 自動起動）
+## 6. セッション開始（container 起動 + collector 自動起動）
 
 ```bash
-attested start --config ./attest/attested.yaml --json
+attested start --json
 ```
 
 出力 JSON から以下を控えます。
@@ -106,8 +128,11 @@ attested start --config ./attest/attested.yaml --json
 
 - `auto_collect: true` の場合、collector はバックグラウンド起動されます
 - `ATTESTED_SESSION_ID` / `ATTESTED_STATE_DIR` はコンテナ内にも注入されます
+- `./attest/attested.yaml` が存在すれば自動読込されるため、通常は `--config` は不要です
+- `start` 成功時に `.attest_run/last_session_id` が自動更新されます
+- `keep_container: true` の場合、`stop` してもコンテナは削除されないため、同じ環境でセッションを繰り返せます
 
-## 6. dev container に接続して作業
+## 7. dev container に接続して作業
 
 SSH ポート公開を設定している場合の例:
 
@@ -135,17 +160,24 @@ attested git commit -m "poc: first commit"
 
 - `attested git commit` は `ATTESTED_SESSION_ID` を使うため、`--session` は通常不要です
 
-## 7. セッション終了 + attest/verify
+## 8. Git 操作はホスト側 / コンテナ内のどちらでも可能
+
+運用ポリシーに応じて、Git 操作の実施場所を選べます。
+
+- 被監査主体が dev container 内で `attested git push` まで行う
+- 監査主体が host 側で `attest/verify` の pass を確認してから push する
+
+実行方法の例:
+
+- コンテナ内: `attested git add/commit/push`
+- ホスト側: 通常の `git` または `attested git ...`
+
+## 9. セッション終了 + attest/verify
 
 PoC では `stop` 時にまとめて実行するのが簡単です。
 
 ```bash
-attested stop \
-  --config ./attest/attested.yaml \
-  --session <SESSION_ID> \
-  --run-attest \
-  --run-verify \
-  --verify-write-result
+attested stop --run-attest --run-verify --verify-write-result
 ```
 
 これにより以下が生成/更新されます（設定次第）。
@@ -155,8 +187,18 @@ attested stop \
 - `ATTESTED`
 - `ATTESTED_SUMMARY`
 - `ATTESTED_POLICY_LAST`
+- `ATTESTED_WORKSPACE_OBSERVED`
 
-## 8. 結果の確認（最初に見る場所）
+## 10. セッションは作業単位で繰り返し利用できる（コンテナ再利用）
+
+`start` / `stop` は、コンテナの作成/削除ではなく **作業単位（session 単位）** として繰り返す使い方が基本です。
+
+- `start` : 登録済みコンテナを起動（または再利用）して新しい session を開始
+- `stop` : session を finalize し、通常はコンテナを停止（削除しない）
+
+そのため、インストール済みツール、キャッシュ、VS Code Server 状態などの開発環境を維持したまま、監査だけを session 単位で区切れます。
+
+## 11. 結果の確認（最初に見る場所）
 
 まずは以下を見ると全体像を把握しやすいです。
 
@@ -166,15 +208,15 @@ attested stop \
   - `executed_identities`, `writer_identities`
 - `.attest_run/attestations/latest/attestation.json`
   - `conclusion.reasons`
+- `ATTESTED_WORKSPACE_OBSERVED`
+  - workspace 全体で累積観測された exec / writer identity（未解決件数/ヒント含む）
 
-## 9. ポリシー候補の生成（PoC で便利）
+## 12. ポリシー候補の生成（PoC で便利）
 
 監査結果から candidate policy を生成できます。
 
 ```bash
-attested policy candidates \
-  --session <SESSION_ID> \
-  --state-dir ./.attest_run/state
+attested policy candidates
 ```
 
 出力例:
@@ -183,7 +225,7 @@ attested policy candidates \
 
 レビュー後に rename して本番ポリシーとして利用します。
 
-## 10. PoC でよくあるハマりどころ
+## 13. PoC でよくあるハマりどころ
 
 ### collector が起動しない / finalize されない
 
@@ -202,7 +244,14 @@ attested policy candidates \
 - `audit_workspace_write.jsonl` の `comm` と `audit_summary.json.writer_identities` は一致しないことがある
 - まず `forbidden_exec` を主判定にする（`POLICY_GUIDE.md` 参照）
 
-## 11. 次のステップ
+### `publish` や mount 設定を変えたのに反映されない
+
+- Docker のポート公開や bind mount はコンテナ作成時に固定されます
+- `attest/attested.yaml` の `publish` / SSH鍵マウント / `mount_attested_bin` 等を変更した場合は、コンテナ再作成が必要です
+  - `attested workspace rm`
+  - `attested workspace init`
+
+## 14. 次のステップ
 
 - `POLICY_GUIDE.md` を参照して禁止ツールポリシーを整備する
 - `THREAT_MODEL.md` を参照して、監査主張の範囲を明確化する

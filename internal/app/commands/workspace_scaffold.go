@@ -60,10 +60,6 @@ func generateWorkspaceScaffold(req workspaceScaffoldRequest) (workspaceScaffoldR
 	if err := os.MkdirAll(attestDir, 0o755); err != nil {
 		return out, fmt.Errorf("mkdir attest dir: %w", err)
 	}
-	scriptsDir := filepath.Join(req.WorkspaceHost, "scripts", "attested")
-	if err := os.MkdirAll(scriptsDir, 0o755); err != nil {
-		return out, fmt.Errorf("mkdir scripts dir: %w", err)
-	}
 
 	if req.Interactive {
 		promptScaffoldValues(&req)
@@ -110,40 +106,13 @@ func generateWorkspaceScaffold(req workspaceScaffoldRequest) (workspaceScaffoldR
 		out.SkippedPaths = append(out.SkippedPaths, "attest/policy.yaml")
 	}
 
-	scriptFiles := map[string]string{
-		"scripts/attested/start.sh":           renderScriptStart(),
-		"scripts/attested/stop.sh":            renderScriptStop(),
-		"scripts/attested/attest.sh":          renderScriptAttest(),
-		"scripts/attested/verify.sh":          renderScriptVerify(),
-		"scripts/attested/export-artifact.sh": renderScriptExportArtifact(),
-		"scripts/attested/workspace-init.sh":  renderScriptWorkspaceInit(),
-		"scripts/attested/workspace-rm.sh":    renderScriptWorkspaceRm(),
-	}
-	for rel, body := range scriptFiles {
-		p := filepath.Join(req.WorkspaceHost, filepath.FromSlash(rel))
-		created, err := writeExecutableIfMissingOrForced(p, []byte(body), req.Force)
-		if err != nil {
-			return out, fmt.Errorf("write %s: %w", rel, err)
-		}
-		if created {
-			out.CreatedPaths = append(out.CreatedPaths, rel)
-		} else {
-			out.SkippedPaths = append(out.SkippedPaths, rel)
-		}
-	}
-
 	// If workspace init is executed via sudo, make scaffold files owned by the invoking user
 	// so day-to-day editing in the workspace does not require root.
 	_ = chownToSudoUserIfPresent(attestDir)
-	_ = chownToSudoUserIfPresent(filepath.Join(req.WorkspaceHost, "scripts"))
-	_ = chownToSudoUserIfPresent(scriptsDir)
 	_ = chownToSudoUserIfPresent(gitignorePath)
 	_ = chownToSudoUserIfPresent(cfgPath)
 	_ = chownToSudoUserIfPresent(dfPath)
 	_ = chownToSudoUserIfPresent(policyPath)
-	for rel := range scriptFiles {
-		_ = chownToSudoUserIfPresent(filepath.Join(req.WorkspaceHost, filepath.FromSlash(rel)))
-	}
 
 	return out, nil
 }

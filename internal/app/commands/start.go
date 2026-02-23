@@ -97,6 +97,12 @@ func RunStart(args []string) int {
 		fmt.Fprintln(os.Stderr, "error: --image is required")
 		return 2
 	}
+	if *autoCollect && !isRoot() && *autoCollectSudo {
+		if err := ensureSudoNonInteractiveAvailable("start --auto-collect"); err != nil {
+			fmt.Fprintln(os.Stderr, "error:", err)
+			return 2
+		}
+	}
 
 	st := state.StateDir{Root: *stateDir}
 
@@ -116,6 +122,12 @@ func RunStart(args []string) int {
 	if wsHost == "" {
 		// repo直下で完結させたい場合向け（sudo不要）
 		wsHost = filepath.Join(st.Root, "workspaces", sessionID)
+	}
+	if absWS, err := filepath.Abs(wsHost); err == nil {
+		wsHost = absWS
+	} else {
+		fmt.Fprintln(os.Stderr, "error: resolve workspace-host:", err)
+		return 2
 	}
 
 	// Create directories
@@ -288,6 +300,10 @@ func RunStart(args []string) int {
 		fmt.Fprintln(os.Stderr, "error: write meta:", err)
 		return 3
 	}
+	if err := writeLastSessionID(sessionID); err != nil {
+		fmt.Fprintln(os.Stderr, "warn: write last_session_id:", err)
+	}
+	chownPathToSudoOwnerBestEffort(filepath.Join(wsHost, ".attest_run"))
 
 	collectorLogPath := ""
 	collectorPIDPath := st.CollectorPIDPath(sessionID)

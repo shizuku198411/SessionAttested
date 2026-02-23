@@ -97,26 +97,29 @@ func RunWorkspaceInit(args []string) int {
 			}
 		}
 		if strings.TrimSpace(*image) == "" {
-			v := promptLine(in, "docker image [ubuntu:latest]: ")
+			v := promptLine(in, "docker image [attested_base:latest]: ")
 			if strings.TrimSpace(v) == "" {
-				*image = "ubuntu:latest"
+				*image = "attested_base:latest"
 			} else {
 				*image = v
 			}
 		}
 		if !presentFlags["build"] && !presentFlags["pull"] {
-			choice := strings.ToLower(strings.TrimSpace(promptLine(in, "is the image need build or pull? [pull|build] (default: pull): ")))
+			choice := strings.ToLower(strings.TrimSpace(promptLine(in, "is the image need build or pull? [pull|build] (default: build): ")))
 			switch choice {
 			case "build":
 				*build = true
 				*pull = false
-			case "pull", "":
+			case "":
+				*build = true
+				*pull = false
+			case "pull":
 				*pull = true
 				*build = false
 			default:
-				fmt.Fprintf(os.Stderr, "warn: unknown choice %q; defaulting to pull\n", choice)
-				*pull = true
-				*build = false
+				fmt.Fprintf(os.Stderr, "warn: unknown choice %q; defaulting to build\n", choice)
+				*build = true
+				*pull = false
 			}
 		}
 		if strings.TrimSpace(*gitSSHKeyHostPath) == "" {
@@ -175,6 +178,12 @@ func RunWorkspaceInit(args []string) int {
 	}
 	if strings.TrimSpace(*name) == "" {
 		fmt.Fprintln(os.Stderr, "error: --name is required (workspace reuse requires a stable container name)")
+		return 2
+	}
+	if absWS, err := filepath.Abs(*workspaceHost); err == nil {
+		*workspaceHost = absWS
+	} else {
+		fmt.Fprintln(os.Stderr, "error: resolve workspace-host:", err)
 		return 2
 	}
 
@@ -363,6 +372,7 @@ func RunWorkspaceInit(args []string) int {
 		fmt.Fprintln(os.Stderr, "error: write workspace meta:", err)
 		return 3
 	}
+	chownPathToSudoOwnerBestEffort(filepath.Join(*workspaceHost, ".attest_run"))
 
 	out := workspaceInitOut{
 		WorkspaceID:   wid,

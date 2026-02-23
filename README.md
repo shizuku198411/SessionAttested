@@ -116,6 +116,55 @@ Operationally, the practical weighting is:
 - `forbidden_exec`: primary verdict (prohibited tool execution)
 - `forbidden_writers`: supplementary verdict (writer attribution evidence)
 
+## Operational Feedback (v0.1.0)
+
+Based on actual development use (not only scripted e2e runs), the current PoC already works well as a repeatable audit workflow.
+
+### 1. Repeatable development flow
+
+A consistent flow can be integrated into normal development:
+
+1. `attested workspace init` (auditor)
+2. `attested start` (auditor)
+3. Work inside dev container + `attested git commit` (auditee)
+4. `attested stop` + `attested attest` / `attested verify` (auditor)
+
+This makes session-scoped auditing and post-session evaluation predictable and easy to standardize.
+
+### 2. Flexible push timing (policy-dependent operations)
+
+Git push can be performed either:
+
+- by the auditee inside the dev container, or
+- by the auditor only after `verify` passes
+
+This supports different operational policies without changing the audit model.
+
+### 3. Low-friction CLI usage
+
+With default config/session path resolution (for example `./attest/attested.yaml` and `.attest_run/last_session_id`), many operations can be executed as single commands without repeating flags. This improves day-to-day usability and reduces workflow mistakes.
+
+### 4. Useful even for solo development (auditor = auditee)
+
+Even in personal projects, the audit outputs remain useful because the collected process evidence is difficult to tamper with retroactively in a way that preserves consistency.
+
+Even when no `forbidden_*` policy is configured, users can review:
+
+- `ATTESTED_WORKSPACE_OBSERVED`
+- `attestation.json`
+
+to understand which executables and writer identities were observed across the workspace and sessions.
+
+### 5. Minimal disruption to development work
+
+Because auditing runs on the host side and the auditee works inside an isolated dev container:
+
+- the auditee can still install tools and run scripts freely inside the container
+- host impact is minimized
+- IDE choice (including VS Code-based workflows) is less constrained than proxy/agent-heavy monitoring setups
+
+Operational constraints mainly come from how the auditor configures the workspace/container (for example network exposure and publish settings), rather than from intrusive tooling inside the developer environment.
+
 ## Use Cases
 
 ### 1. Prohibited tool detection / verification (AI agents, downloaders, etc.)

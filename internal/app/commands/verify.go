@@ -49,6 +49,26 @@ func RunVerify(args []string) int {
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
+	if *attPath == "" {
+		*attPath = filepath.Join(".attest_run", "attestations", "latest", "attestation.json")
+	}
+	if *sigPath == "" {
+		*sigPath = filepath.Join(".attest_run", "attestations", "latest", "attestation.sig")
+	}
+	if *pubPath == "" {
+		defPub := filepath.Join(".attest_run", "attestations", "latest", "attestation.pub")
+		if _, err := os.Stat(defPub); err == nil {
+			*pubPath = defPub
+		}
+	}
+	if *bindingPath == "" {
+		if sid, ok := readLastSessionID(); ok {
+			defBinding := filepath.Join(".attest_run", "state", "sessions", sid, "commit_binding.json")
+			if _, err := os.Stat(defBinding); err == nil {
+				*bindingPath = defBinding
+			}
+		}
+	}
 	if *attPath == "" || *sigPath == "" {
 		fmt.Fprintln(os.Stderr, "error: --attestation and --signature are required")
 		return 2
@@ -81,6 +101,11 @@ func RunVerify(args []string) int {
 			if err := writeVerifyResultArtifacts(summaryPath, &att, out, *policyPath, policyRawForRecord); err != nil {
 				fmt.Fprintln(os.Stderr, "warn: write result file:", err)
 			}
+			chownPathToSudoOwnerBestEffort(filepath.Dir(summaryPath))
+			chownPathToSudoOwnerBestEffort(filepath.Join(filepath.Dir(summaryPath), "ATTESTED"))
+			chownPathToSudoOwnerBestEffort(filepath.Join(filepath.Dir(summaryPath), "ATTESTED_SUMMARY"))
+			chownPathToSudoOwnerBestEffort(filepath.Join(filepath.Dir(summaryPath), "ATTESTED_POLICY_LAST"))
+			chownPathToSudoOwnerBestEffort(filepath.Join(filepath.Dir(summaryPath), "ATTESTED_WORKSPACE_OBSERVED"))
 		}
 		return emitVerify(*jsonOut, out, code)
 	}

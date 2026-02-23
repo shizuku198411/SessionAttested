@@ -48,6 +48,11 @@ func RunPolicyCandidates(args []string) int {
 		return 2
 	}
 	if strings.TrimSpace(*sessionID) == "" {
+		if sid, ok := readLastSessionID(); ok {
+			*sessionID = sid
+		}
+	}
+	if strings.TrimSpace(*sessionID) == "" {
 		fmt.Fprintln(os.Stderr, "error: --session is required")
 		return 2
 	}

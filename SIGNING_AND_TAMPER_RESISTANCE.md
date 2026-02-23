@@ -41,7 +41,7 @@ High-level flow:
 4. optionally check commit binding consistency
 5. optionally compare against provided policy / policy snapshot
 6. optionally fail if `conclusion.pass=false` (`require-pass=true`)
-7. optionally write result markers (`ATTESTED`, `ATTESTED_SUMMARY`)
+7. optionally write result markers (`ATTESTED`, `ATTESTED_SUMMARY`, `ATTESTED_POLICY_LAST`, `ATTESTED_WORKSPACE_OBSERVED`)
 
 ## 4. Role of Canonical JSON
 

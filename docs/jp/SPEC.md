@@ -112,7 +112,7 @@ PoC時点の運用では、以下の解釈を推奨する。
 
 ## 7. 整合性集約（event_root）
 
-PoCでは `event_root_alg = hash_chain_sha256` を採用する。
+PoCでは hash chain による `event_root` 集約（SHA-256）を採用する。
 
 ### 7.1 canonical JSON
 署名・ハッシュ計算に用いる JSON 正規化規則は以下とする。

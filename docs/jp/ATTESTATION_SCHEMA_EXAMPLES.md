@@ -13,6 +13,7 @@
 - `attestation.json`（署名対象本体）
 - `ATTESTED`（プレーンテキストマーカー）
 - `ATTESTED_SUMMARY`（verify 結果一覧）
+- `ATTESTED_WORKSPACE_OBSERVED`（workspace 累積の観測一覧）
 
 注記:
 
@@ -305,7 +306,53 @@ timestamp: 2026-02-22T09:59:14Z
 
 - 直近 verify でどの policy を使ったかの確認
 
-## 9. フィールド追加・互換性の考え方（PoC）
+## 9. `ATTESTED_WORKSPACE_OBSERVED`（JSON / 累積）
+
+`verify --write-result` 実行時に更新される、workspace 単位の累積観測一覧です。  
+session 単位ではなく、複数 session をまたいだ `exec` / `writer` identity の棚卸しや追跡に使います。
+
+例（簡略）:
+
+```json
+{
+  "sessions_seen": [
+    "28e005395ea6b8720012b3b091d826e4"
+  ],
+  "exec_identities": [
+    {
+      "sha256": "sha256:f211b442bfb2eb20e4d6d7c0593b34ec421a5bcd630873c69ed7aaedeea28a26",
+      "path_hint": "/home/dev/.vscode-server/extensions/openai.chatgpt.../codex",
+      "first_seen_session": "28e005395ea6b8720012b3b091d826e4",
+      "last_seen_session": "28e005395ea6b8720012b3b091d826e4",
+      "seen_count": 1
+    }
+  ],
+  "writer_identities": [
+    {
+      "sha256": "sha256:f211b442bfb2eb20e4d6d7c0593b34ec421a5bcd630873c69ed7aaedeea28a26",
+      "path_hint": "/home/dev/.vscode-server/extensions/openai.chatgpt.../codex",
+      "first_seen_session": "28e005395ea6b8720012b3b091d826e4",
+      "last_seen_session": "28e005395ea6b8720012b3b091d826e4",
+      "seen_count": 1
+    }
+  ],
+  "exec_identity_unresolved": 19,
+  "writer_identity_unresolved": 2
+}
+```
+
+用途:
+
+- `forbidden_*` で落としきれていない観測対象の確認
+- workspace 全体で発生した exe / writer の後追い
+- policy 見直し時の参考情報
+
+補足:
+
+- session ごとの観測一覧ファイル（`ATTESTED_OBSERVED`）は現行実装では生成しません
+- session 単位の詳細は `attestation.json` と `audit_summary.json` を参照します
+
+## 10. フィールド追加・互換性の考え方（PoC）
 
 PoC 時点では、運用しながら field を追加する可能性があります。
 
@@ -315,7 +362,7 @@ PoC 時点では、運用しながら field を追加する可能性がありま
 - 必須フィールドのみ厳格に扱う
 - `schema` / `policy_version` / `spec_version`（将来追加含む）を見て分岐する
 
-## 10. トラブルシュートで最初に見るファイル
+## 11. トラブルシュートで最初に見るファイル
 
 ケース別の初手:
 
@@ -324,6 +371,7 @@ PoC 時点では、運用しながら field を追加する可能性がありま
   - `ATTESTED_SUMMARY` (`reason`)
 - 「何が観測されたか知りたい」
   - `audit_summary.json` (`executed_identities`, `writer_identities`)
+  - `ATTESTED_WORKSPACE_OBSERVED`（workspace 累積）
 - 「生ログまで追いたい」
   - `audit_exec.jsonl`
   - `audit_workspace_write.jsonl`

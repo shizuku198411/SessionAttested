@@ -172,11 +172,11 @@ collector finalize 時に生成するサマリ。
 収集イベント列（canonical JSON）から計算した hash chain の集約結果。
 
 主な内容:
-- `event_root`
-- `event_root_alg`
+- `root`
 - `event_count`
+- `seed`
 
-これが attestation の `integrity` に入ります。
+これが attestation の `event_root` として参照されます。
 
 ## 9. finalize（`attested stop` 時）
 
@@ -210,4 +210,3 @@ collector finalize 時に生成するサマリ。
 - `open_write` 以外の write 系操作（rename/unlink/create）の拡張監視
 - K8s 環境での container/session 解決強化
 - deny モード（LSM による実行拒否）との連携
-

@@ -30,7 +30,7 @@ This document explains the end-to-end attestation flow in SessionAttested using 
 ### Step 1. Start session (auditor)
 
 ```bash
-attested start --config ./attest/attested.yaml --json
+attested start --json
 ```
 
 What happens:
@@ -39,6 +39,7 @@ What happens:
 - writes session metadata (`meta.json`)
 - (optionally) starts collector in background (`auto_collect: true`)
 - injects `ATTESTED_SESSION_ID` / `ATTESTED_STATE_DIR` into the container
+- allows repeated `start` / `stop` cycles while reusing the same dev-container environment (when configured)
 
 Outputs:
 
@@ -66,8 +67,6 @@ What is recorded:
 
 ```bash
 attested stop \
-  --config ./attest/attested.yaml \
-  --session <SESSION_ID> \
   --run-attest \
   --run-verify \
   --verify-write-result
@@ -75,19 +74,18 @@ attested stop \
 
 What happens:
 
-- stops container (or finalizes session against container state)
+- stops the container (or stops+removes it depending on config/policy)
 - signals collector to stop and finalize
 - writes audit aggregates (`audit_summary.json`, `event_root.json`)
 - builds and signs `attestation.json`
 - runs `verify`
-- updates `ATTESTED`, `ATTESTED_SUMMARY`, `ATTESTED_POLICY_LAST`
+- updates `ATTESTED`, `ATTESTED_SUMMARY`, `ATTESTED_POLICY_LAST`, `ATTESTED_WORKSPACE_OBSERVED`
 
 ## 3. Optional: Policy candidate generation (auditor)
 
 ```bash
 attested policy candidates \
-  --session <SESSION_ID> \
-  --state-dir ./.attest_run/state
+  --session <SESSION_ID>
 ```
 
 Output:
@@ -101,13 +99,8 @@ Use this to bootstrap policy design from observed identities.
 If not using `stop --run-attest --run-verify`, run manually:
 
 ```bash
-attested attest --config ./attest/attested.yaml --session <SESSION_ID>
-attested verify --config ./attest/attested.yaml \
-  --attestation ./.attest_run/attestations/latest/attestation.json \
-  --signature ./.attest_run/attestations/latest/attestation.sig \
-  --public-key ./.attest_run/attestations/latest/attestation.pub \
-  --binding ./.attest_run/state/sessions/<SESSION_ID>/commit_binding.json \
-  --write-result
+attested attest
+attested verify --write-result
 ```
 
 ## 5. Outputs by Stage (Summary)
@@ -127,6 +120,7 @@ attested verify --config ./attest/attested.yaml \
   - `ATTESTED`
   - `ATTESTED_SUMMARY`
   - `ATTESTED_POLICY_LAST`
+  - `ATTESTED_WORKSPACE_OBSERVED`
 
 ## 6. Operational Interpretation (PoC)
 

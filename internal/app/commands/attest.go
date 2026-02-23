@@ -55,6 +55,11 @@ func RunAttest(args []string) int {
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
+	if *sessionID == "" {
+		if sid, ok := readLastSessionID(); ok {
+			*sessionID = sid
+		}
+	}
 
 	if *sessionID == "" || *repo == "" || *policyPath == "" || *outDir == "" || *signingKeyPath == "" {
 		fmt.Fprintln(os.Stderr, "error: --session --repo --policy --out --signing-key are required")
@@ -223,6 +228,7 @@ func RunAttest(args []string) int {
 		fmt.Printf("wrote:\n  %s\n  %s\n  %s\n", attPath, sigPath, pubPath)
 		fmt.Printf("attestation pass=%v\n", eval.Pass)
 	}
+	chownPathToSudoOwnerBestEffort(*outDir)
 
 	if eval.Pass {
 		return 0

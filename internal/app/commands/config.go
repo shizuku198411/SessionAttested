@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -77,7 +78,11 @@ func applyConfigDefaults(command string, args []string) ([]string, error) {
 func applyConfigDefaultsMulti(commands []string, args []string) ([]string, error) {
 	configPath, profile, filtered := extractConfigArgs(args)
 	if configPath == "" {
-		return filtered, nil
+		if p := defaultConfigPath(); p != "" {
+			configPath = p
+		} else {
+			return filtered, nil
+		}
 	}
 
 	raw, err := os.ReadFile(configPath)
@@ -146,7 +151,10 @@ func applyConfigDefaultsMulti(commands []string, args []string) ([]string, error
 
 func mergedConfigValues(configPath, profile, command string) (map[string]any, error) {
 	if strings.TrimSpace(configPath) == "" {
-		return nil, nil
+		configPath = defaultConfigPath()
+		if strings.TrimSpace(configPath) == "" {
+			return nil, nil
+		}
 	}
 	raw, err := os.ReadFile(configPath)
 	if err != nil {
@@ -216,6 +224,18 @@ func extractConfigArgs(args []string) (configPath, profile string, filtered []st
 		}
 	}
 	return configPath, profile, filtered
+}
+
+func defaultConfigPath() string {
+	candidates := []string{
+		filepath.Join("attest", "attested.yaml"),
+	}
+	for _, p := range candidates {
+		if _, err := os.Stat(p); err == nil {
+			return p
+		}
+	}
+	return ""
 }
 
 func mergeValues(dst map[string]any, src map[string]any) {

@@ -34,7 +34,16 @@ func RunCollect(args []string) int {
 		return 2
 	}
 	if *sessionID == "" {
+		if sid, ok := readLastSessionID(); ok {
+			*sessionID = sid
+		}
+	}
+	if *sessionID == "" {
 		fmt.Fprintln(os.Stderr, "error: --session is required")
+		return 2
+	}
+	if !isRoot() {
+		fmt.Fprintln(os.Stderr, "error: collect requires sudo/root (eBPF attach)")
 		return 2
 	}
 	if *untilStop && *duration > 0 {

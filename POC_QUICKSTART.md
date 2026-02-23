@@ -41,9 +41,31 @@ git branch -M main
 git remote add origin <your-repo-url>
 ```
 
-## 4. Prepare PoC config and Dockerfile
+## 4. Initialize workspace (recommended)
 
-Minimum files:
+The easiest path is to let `workspace init` generate the scaffold interactively.
+
+```bash
+attested workspace init
+```
+
+What it prepares (by default):
+
+- workspace registration (`.attest_run/state/workspaces/...`)
+- `attest/attested.yaml` (config template)
+- `attest/Dockerfile` (dev-container template)
+- `attest/policy.yaml` (policy template)
+- `.gitignore` (managed block for local audit artifacts)
+- dev container (created and left stopped)
+
+Notes:
+
+- Interactive prompts fill items such as workspace id/path, image, build/pull, GitHub repo, git user, and optional SSH key mount.
+- Most users do not need to prepare `attested.yaml` manually.
+
+## 5. Manual config/Dockerfile preparation (optional)
+
+If you prefer manual setup instead of `workspace init`, prepare at least:
 
 - `Dockerfile`
 - `attest/attested.yaml`
@@ -69,10 +91,10 @@ Update `attest/attested.yaml` for your environment, especially:
 - `commands.attest.signing_key`
 - `commands.verify.policy`
 
-## 5. Start a session (container + auto collector)
+## 6. Start a session (container start + auto collector)
 
 ```bash
-attested start --config ./attest/attested.yaml --json
+attested start --json
 ```
 
 Save:
@@ -82,7 +104,13 @@ Save:
 
 If `auto_collect: true`, collector starts in background.
 
-## 6. Work inside the dev container
+Notes:
+
+- `./attest/attested.yaml` is auto-detected if present (so `--config` is usually unnecessary)
+- `.attest_run/last_session_id` is updated automatically on successful `start`
+- By default, `stop` can preserve the container (`keep_container: true`), so you can repeat sessions without rebuilding the environment
+
+## 7. Work inside the dev container
 
 Example (SSH):
 
@@ -101,15 +129,22 @@ attested git commit -m "poc: first commit"
 
 `ATTESTED_SESSION_ID` is usually injected, so `--session` is not required for `attested git commit`.
 
-## 7. Stop session + attest + verify
+## 8. Git operations can be done on host or inside container
+
+You can choose either operation style depending on your policy:
+
+- auditee pushes from inside the dev container
+- auditor runs `attest` / `verify` first and pushes only after pass (from host or container)
+
+Typical examples:
+
+- inside container: `attested git add/commit/push`
+- on host: normal `git` or `attested git ...` (same workspace)
+
+## 9. Stop session + attest + verify
 
 ```bash
-attested stop \
-  --config ./attest/attested.yaml \
-  --session <SESSION_ID> \
-  --run-attest \
-  --run-verify \
-  --verify-write-result
+attested stop --run-attest --run-verify --verify-write-result
 ```
 
 Generated/updated outputs typically include:
@@ -119,8 +154,18 @@ Generated/updated outputs typically include:
 - `ATTESTED`
 - `ATTESTED_SUMMARY`
 - `ATTESTED_POLICY_LAST`
+- `ATTESTED_WORKSPACE_OBSERVED`
 
-## 8. First Files to Check
+## 10. Repeat sessions on the same container (normal workflow)
+
+`start` / `stop` are intended to be used repeatedly as **work-unit boundaries**.
+
+- `start`: starts (or reuses) the registered dev container and begins a new audited session
+- `stop`: finalizes the session and typically stops the container, but does not delete it
+
+This means your dev environment (installed tools, caches, editor server state, etc.) can remain available across sessions.
+
+## 11. First Files to Check
 
 - `ATTESTED_SUMMARY`
   - `verify_ok`, `attestation_pass`, `reason`
@@ -128,13 +173,13 @@ Generated/updated outputs typically include:
   - `executed_identities`, `writer_identities`
 - `.attest_run/attestations/latest/attestation.json`
   - `conclusion.reasons`
+- `ATTESTED_WORKSPACE_OBSERVED`
+  - cumulative observed exec/writer identities across workspace sessions (including unresolved counters/hints)
 
-## 9. Generate a Candidate Policy
+## 12. Generate a Candidate Policy
 
 ```bash
-attested policy candidates \
-  --session <SESSION_ID> \
-  --state-dir ./.attest_run/state
+attested policy candidates
 ```
 
 Output:
@@ -143,7 +188,7 @@ Output:
 
 Review and rename it to your active policy file.
 
-## 10. Common PoC Pitfalls
+## 13. Common PoC Pitfalls
 
 ### Collector does not start / finalize
 
@@ -162,3 +207,10 @@ Review and rename it to your active policy file.
 
 - `audit_workspace_write.jsonl.comm` and `writer_identities` are related but not always identical
 - prefer `forbidden_exec` as the primary verdict (see `POLICY_GUIDE.md`)
+
+### I changed `publish`/mount settings but nothing changed
+
+- Docker port publishes and bind mounts are fixed at container creation time
+- if you changed `attest/attested.yaml` (`publish`, SSH key mount, mounted `attested` binary, etc.), recreate the workspace container:
+  - `attested workspace rm`
+  - `attested workspace init`

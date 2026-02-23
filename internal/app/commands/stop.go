@@ -48,6 +48,11 @@ func RunStop(args []string) int {
 		return 2
 	}
 	if *sessionID == "" {
+		if sid, ok := readLastSessionID(); ok {
+			*sessionID = sid
+		}
+	}
+	if *sessionID == "" {
 		fmt.Fprintln(os.Stderr, "error: --session is required")
 		return 2
 	}
@@ -176,6 +181,13 @@ func RunStop(args []string) int {
 			return code
 		}
 	}
+
+	// When executed via sudo, restore ownership of local run artifacts for the shell user.
+	chownPathToSudoOwnerBestEffort(filepath.Dir(st.Root))
+	chownPathToSudoOwnerBestEffort("ATTESTED")
+	chownPathToSudoOwnerBestEffort("ATTESTED_SUMMARY")
+	chownPathToSudoOwnerBestEffort("ATTESTED_POLICY_LAST")
+	chownPathToSudoOwnerBestEffort("ATTESTED_WORKSPACE_OBSERVED")
 
 	return emitStop(*jsonOut, stopOut{
 		SessionID:        *sessionID,
