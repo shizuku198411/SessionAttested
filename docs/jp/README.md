@@ -2,7 +2,7 @@
 
 [日本語](./README.md) | [English](../../README.md)
 
-![Version](https://img.shields.io/badge/version-v0.1.1-blue)
+![Version](https://img.shields.io/badge/version-v0.1.2-blue)
 ![Status](https://img.shields.io/badge/status-PoC-orange)
 
 
@@ -10,6 +10,7 @@
 
 本プロジェクトは、**検証可能な開発セッション監査とポリシー運用の基盤** として利用できます。  
 つまり、**禁止プロセスが実行されていないこと / 許可された実行体のみが書き込みを行ったこと** を、管理下セッションについて検証可能な形で提示するための基盤です。
+あわせて、成果物だけでなく開発過程の証跡も評価・レビュー対象に含める **Development-Session Attestation (DSA)** の具体的な実装アプローチとして位置づけられます（[`DSA.md`](DSA.md) を参照）。
 
 ## SessionAttested による監査結果イメージ（WebUI）
 
@@ -426,6 +427,7 @@ PoC 時点では、以下のような用途を想定しています。
 
 - [`POC_QUICKSTART.md`](POC_QUICKSTART.md) : PoC 利用者向けのビルド・利用手順（最短導線）
 - [`CHANGELOG.md`](CHANGELOG.md) : リリースごとの差分（v0.1.1 以降）
+- [`DSA.md`](DSA.md) : Development-Session Attestation (DSA) の考え方と SessionAttested の位置づけ
 - [`ATTESTATION_FLOW.md`](ATTESTATION_FLOW.md) : 監査主体/被監査主体の役割とコマンドベースの署名付き証明フロー
 - [`EVENT_COLLECTION.md`](EVENT_COLLECTION.md) : eBPF/collector によるイベント収集の仕組み
 - [`SIGNING_AND_TAMPER_RESISTANCE.md`](SIGNING_AND_TAMPER_RESISTANCE.md) : 署名・検証と改ざん困難性の考え方

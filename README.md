@@ -2,7 +2,7 @@
 
 [English](./README.md) | [日本語](docs/jp/README.md)
 
-![Version](https://img.shields.io/badge/version-v0.1.1-blue)
+![Version](https://img.shields.io/badge/version-v0.1.2-blue)
 ![Status](https://img.shields.io/badge/status-PoC-orange)
 
 
@@ -11,6 +11,7 @@ English docs for SessionAttested. For the Japanese version, see [`docs/jp/README
 **SessionAttested** is a **policy-based development-session attestation framework** that observes, from the host side (LSM/eBPF), which processes were executed and which executable identities wrote to a development workspace during a session, then binds the result to commits and outputs a signed attestation.
 
 It can be used as a foundation for verifiable development-session auditing and policy enforcement workflows.
+It is also a concrete implementation path toward **Development-Session Attestation (DSA)**, a broader idea of evaluating and reviewing software work with session/process evidence in addition to final artifacts (see [`DSA.md`](DSA.md)).
 
 ## Audit Results View with SessionAttested WebUI
 
@@ -331,6 +332,7 @@ See [`ATTESTATION_SCHEMA_EXAMPLES.md`](ATTESTATION_SCHEMA_EXAMPLES.md) for field
 
 - [`POC_QUICKSTART.md`](POC_QUICKSTART.md) : PoC build and usage quickstart
 - [`CHANGELOG.md`](CHANGELOG.md) : release-by-release changes (v0.1.1+)
+- [`DSA.md`](DSA.md) : Development-Session Attestation (DSA) concept and SessionAttested's position
 - [`ATTESTATION_FLOW.md`](ATTESTATION_FLOW.md) : actor-based attestation flow and command sequence
 - [`EVENT_COLLECTION.md`](EVENT_COLLECTION.md) : eBPF/collector event collection design
 - [`SIGNING_AND_TAMPER_RESISTANCE.md`](SIGNING_AND_TAMPER_RESISTANCE.md) : signing and tamper-resistance model
