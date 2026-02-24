@@ -35,6 +35,10 @@ func main() {
 		code := commands.RunVerify(os.Args[2:])
 		os.Exit(code)
 
+	case "webui":
+		code := commands.RunWebUI(os.Args[2:])
+		os.Exit(code)
+
 	case "workspace":
 		if len(os.Args) < 3 {
 			usage()
@@ -94,6 +98,7 @@ Usage:
   attested policy candidates --session <id> [--state-dir <dir>] [--out <path>] [--include-git] [--include-attested] [--include-exec] [--json]
   attested workspace init --workspace-id <id> --workspace-host <dir> --name <container> --image <image> [--build|--pull] [--scaffold[=true|false]] [--scaffold-force] [--scaffold-interactive] [--repo <owner/name>] [start-compatible options...] [--state-dir <dir>] [--config <yaml>] [--profile <name>] [--json]
   attested workspace rm --workspace-id <id> [--remove-workspace-host] [--state-dir <dir>] [--json]
+  attested webui [--addr 127.0.0.1:8443] [--session <id>] [--run-dir .attest_run] [--state-dir .attest_run/state] [--tls-cert <path>] [--tls-key <path>]
   attested verify --attestation <path> --signature <path> [--public-key <path>] [--policy <path>] [--binding <path>] [--require-pass] [--write-result] [--result-file <path>] [--config <yaml>] [--profile <name>] [--json]
   attested attest --session <id> --repo <owner/name> [--commit <40hex>] --policy <path> --out <dir> --signing-key <pem> [--use-binding] [--key-id <id>] [--issuer-name <name>] [--state-dir <dir>] [--config <yaml>] [--profile <name>] [--json]
   attested start --image <image> [--name <name>] [--reuse-container] [--pull] [--build] [--build-context <dir>] [--dockerfile <path>] [--build-arg K=V ...] [--auto-collect] [--auto-collect-sudo] [--auto-collect-wait 5s] [--auto-collect-log <path>] [--inject-session-env] [--mount-attested-bin] [--attested-bin-host-path <path>] [--attested-bin-container-path <path>] [--git-user-name <name>] [--git-user-email <email>] [--git-ssh-key-host-path <path>] [--git-ssh-key-container-path <path>] [--env K=V ...] [--publish HOST:CONT[/tcp|udp] ...] [--cgroup-parent <path>] [--state-dir <dir>] [--workspace-host <dir>] [--config <yaml>] [--profile <name>] [--json]

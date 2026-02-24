@@ -1,0 +1,415 @@
+{
+  "window": {
+    "start_rfc3339": "2026-02-24T00:21:11Z",
+    "end_rfc3339": "2026-02-24T00:31:08Z"
+  },
+  "exec_observed": {
+    "count": 1404
+  },
+  "executed_identities": [
+    {
+      "sha256": "sha256:0b3c9b95118dbb6c31848729f708607cdc696631a2a9cb33fe65164b1c169f38",
+      "inode": 2304,
+      "dev": 2050,
+      "path_hint": "/usr/bin/readlink"
+    },
+    {
+      "sha256": "sha256:0c35bf1c58658a42041962d4ea193b74df553211eab773d8f9bbf30816c5adac",
+      "inode": 3027,
+      "dev": 2050,
+      "path_hint": "/usr/bin/dpkg-deb"
+    },
+    {
+      "sha256": "sha256:11993c6ae210c6fa149dcaf55bb46db7f9c301bb986d70115ce817f4db962caf",
+      "inode": 9148171,
+      "dev": 2050,
+      "path_hint": "/var/lib/dpkg/info/libc-bin.postinst"
+    },
+    {
+      "sha256": "sha256:12d09f922c013d07b62cca4fda15a567d94133b196c23193784f1725562ad754",
+      "inode": 1598,
+      "dev": 2050,
+      "path_hint": "/etc/update-motd.d/50-motd-news"
+    },
+    {
+      "sha256": "sha256:1a00ba97fa8878c4e9a6e728eca3c6765ca8a31f33f55726f3571d5fb95601da",
+      "inode": 2005,
+      "dev": 2050,
+      "path_hint": "/usr/bin/gzip"
+    },
+    {
+      "sha256": "sha256:1ae5e306bce2eca707ff5cd25ede118b24a80ca85cd85a6eb7d658d81abd3dfa",
+      "inode": 2466,
+      "dev": 2050,
+      "path_hint": "/usr/bin/sleep"
+    },
+    {
+      "sha256": "sha256:1ba802f8ef74870f12d8a59460a37c68ffa742e0c0c21d847d7d580e8941f01f",
+      "inode": 2161,
+      "dev": 2050,
+      "path_hint": "/usr/bin/mv"
+    },
+    {
+      "sha256": "sha256:25091d790a7f2e44a0df654d985bb555976e0cfb54eade2a7cb81f81d7c45345",
+      "inode": 41223,
+      "dev": 2050,
+      "path_hint": "/usr/bin/apt"
+    },
+    {
+      "sha256": "sha256:26b759d8838d10b0ad5bd0142f004f8b1ae94b32664834f9fa0cc4f21bc815b7",
+      "inode": 1794,
+      "dev": 2050,
+      "path_hint": "/usr/bin/cat"
+    },
+    {
+      "sha256": "sha256:26ce6cceb17ac710ee7253c49ea825c618d4f9e49a135d52b4edce336c40f620",
+      "inode": 9004402,
+      "dev": 1048687,
+      "path_hint": "/home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/node_modules/@vscode/ripgrep/bin/rg"
+    },
+    {
+      "sha256": "sha256:2bfe7e6f1939a446c2a4d21998202a247ce58edb1890e10d97b633a91e5a71b5",
+      "inode": 9002325,
+      "dev": 1048687,
+      "path_hint": "/home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/out/vs/base/node/cpuUsage.sh"
+    },
+    {
+      "sha256": "sha256:2c47e631f2396bdc1f0a6a2ca2a6779e1d21be3193388ceb5bc7aa87660d9c1e",
+      "inode": 7444,
+      "dev": 2050,
+      "path_hint": "/usr/lib/openssh/sftp-server"
+    },
+    {
+      "sha256": "sha256:2e791791b1149da102b375b36915fc5902f450e05f6fe1711f593a56223ee319",
+      "inode": 41296,
+      "dev": 2050,
+      "path_hint": "/usr/bin/apt-config"
+    },
+    {
+      "sha256": "sha256:385052662d7d365d8b47810670d4bc0af0f48c0f5564786a5bc1b819be2dcb06",
+      "inode": 1746,
+      "dev": 2050,
+      "path_hint": "/usr/bin/basename"
+    },
+    {
+      "sha256": "sha256:3fa1c04e29647304817b1ffe9a7600dc80c879ea4c8a9302032799830e0c2133",
+      "inode": 30988,
+      "dev": 2050,
+      "path_hint": "/usr/bin/ps"
+    },
+    {
+      "sha256": "sha256:45ec8c948cb0f17b38f27b4d8235596b17ece3b7eea5afcbb3be8b1ee5a98c77",
+      "inode": 41339,
+      "dev": 2050,
+      "path_hint": "/usr/bin/apt-key"
+    },
+    {
+      "sha256": "sha256:4895ae4136dd02514a47e312760b5af3fa1ddfdbe952e6e047bfc5f4eead5e51",
+      "inode": 41851,
+      "dev": 2050,
+      "path_hint": "/usr/lib/apt/methods/gpgv"
+    },
+    {
+      "sha256": "sha256:4acc7a0b3ba8b47f613257b1a806ca9f39c0d1ac261a1be48385ea41116a77de",
+      "inode": 1881,
+      "dev": 2050,
+      "path_hint": "/usr/bin/dircolors"
+    },
+    {
+      "sha256": "sha256:4ae6774eca121005b8e6187616ba675f9af7abdda20818e3df55c1539711e241",
+      "inode": 2315,
+      "dev": 2050,
+      "path_hint": "/usr/bin/rm"
+    },
+    {
+      "sha256": "sha256:59e7cf8b9bd8711ae1aa6f7bbbd4132b61492409c3afe8e1505225efda1cb8f6",
+      "inode": 2653,
+      "dev": 2050,
+      "path_hint": "/usr/bin/which"
+    },
+    {
+      "sha256": "sha256:5b45e62f4eacef23446893f97b6d3f4c9c8b6f8b83320c93eaae5eca777e6305",
+      "inode": 41886,
+      "dev": 2050,
+      "path_hint": "/usr/lib/apt/methods/http"
+    },
+    {
+      "sha256": "sha256:5f71e93b269c991f3ffed4309a599ea5e20567b5f6a6c43cbf45b6f2ba6d363a",
+      "inode": 3024,
+      "dev": 2050,
+      "path_hint": "/usr/bin/dpkg"
+    },
+    {
+      "sha256": "sha256:7273d8519fa8792eeaeaf969fd5ab27a49cc2497164a65e82fc9dce3c6e6376d",
+      "inode": 3037,
+      "dev": 2050,
+      "path_hint": "/usr/bin/dpkg-split"
+    },
+    {
+      "sha256": "sha256:76f61a0c1f44f040454835d45424d0ae740eaf1515709bbfc9b1fc4de6a8ec41",
+      "inode": 2593,
+      "dev": 2050,
+      "path_hint": "/usr/bin/uname"
+    },
+    {
+      "sha256": "sha256:7e104be971478cbf9406c8c718659473122ea8e39723f0aba27e3b28825b8274",
+      "inode": 2094,
+      "dev": 2050,
+      "path_hint": "/usr/bin/ls"
+    },
+    {
+      "sha256": "sha256:83601cf625afe2f336d8dd8229d5c9a98adf5c410ec1e60845601d6cf63bf979",
+      "inode": 42078,
+      "dev": 2050,
+      "path_hint": "/usr/lib/apt/methods/store"
+    },
+    {
+      "sha256": "sha256:867ff0dfd2d702cfebcff6a64eee5835c928fe359b9deced92e442211362d16d",
+      "inode": 2544,
+      "dev": 2050,
+      "path_hint": "/usr/bin/tar"
+    },
+    {
+      "sha256": "sha256:875bbfa64ca563363629ce4aa4778e937e48ffc668562a798159095dcaf365be",
+      "inode": 2362,
+      "dev": 2050,
+      "path_hint": "/usr/bin/sed"
+    },
+    {
+      "sha256": "sha256:88532c9a7dc1052de42561ee7b2fbbfbc7f17ae50a824da68345926f4592cbd2",
+      "inode": 1999,
+      "dev": 2050,
+      "path_hint": "/usr/bin/groups"
+    },
+    {
+      "sha256": "sha256:8b93b575ba20149573f8e64ed7c3e43e44de44b439dbebf9df87997ec1b4a719",
+      "inode": 1804,
+      "dev": 2050,
+      "path_hint": "/usr/bin/chmod"
+    },
+    {
+      "sha256": "sha256:8f389d049e6b15029ca7311cd449861f47b7e3381f4083646b812380f07f28c9",
+      "inode": 32449,
+      "dev": 2050,
+      "path_hint": "/usr/sbin/dpkg-preconfigure"
+    },
+    {
+      "sha256": "sha256:93fd34381ad0ba02987818df0f4e6dfdf47d3a606ffd28749e8df48aedde5a68",
+      "inode": 2071,
+      "dev": 2050,
+      "path_hint": "/usr/bin/lesspipe"
+    },
+    {
+      "sha256": "sha256:9506bcf988e064657688589bea0f2c32fa766bf6041c049f5b8c8b877cd8ec37",
+      "inode": 1884,
+      "dev": 2050,
+      "path_hint": "/usr/bin/dirname"
+    },
+    {
+      "sha256": "sha256:9d3b4c4c9f60e389062e77b22493316123b92ff19327d30437e5e4583933a738",
+      "inode": 2542,
+      "dev": 2050,
+      "path_hint": "/usr/bin/tail"
+    },
+    {
+      "sha256": "sha256:a0bf35fb6e8053a4b9026090016d0e8d1e870705cde7c9f750d58445c4aa700d",
+      "inode": 2330,
+      "dev": 2050,
+      "path_hint": "/usr/bin/run-parts"
+    },
+    {
+      "sha256": "sha256:a241b34559d0bf762359bdc120babccab6873b8e97b0fae206523fac30126f1e",
+      "inode": 5921,
+      "dev": 2050,
+      "path_hint": "/usr/bin/ldd"
+    },
+    {
+      "sha256": "sha256:a7b1bc1a88927e6f5b30101c415c311aaa9810f51642c12a6b1a824a4c1df1fa",
+      "inode": 10706,
+      "dev": 2050,
+      "path_hint": "/usr/bin/gpgv"
+    },
+    {
+      "sha256": "sha256:a95219a95160120ffe2f418bb4302280da98184d0e08b4e02c1b2459de7efa69",
+      "inode": 2564,
+      "dev": 2050,
+      "path_hint": "/usr/bin/touch"
+    },
+    {
+      "sha256": "sha256:aa6540695d076182256dd6e96c8b302e4d56381e3000bbfd5c71bbdfe94a4942",
+      "inode": 10999,
+      "dev": 2050,
+      "path_hint": "/usr/bin/git"
+    },
+    {
+      "sha256": "sha256:aa6540695d076182256dd6e96c8b302e4d56381e3000bbfd5c71bbdfe94a4942",
+      "inode": 11002,
+      "dev": 2050,
+      "path_hint": "/usr/lib/git-core/git"
+    },
+    {
+      "sha256": "sha256:abce017cc2ad649b9e8407eefdb3d6219d3cc7e9a35d47f6eea86e41ea0af43c",
+      "inode": 2143,
+      "dev": 2050,
+      "path_hint": "/usr/bin/mkdir"
+    },
+    {
+      "sha256": "sha256:af1cb469d4a017e28359248cf8ae16a08b3fe013c54b243210ef5b9f74158a51",
+      "inode": 2020,
+      "dev": 2050,
+      "path_hint": "/usr/bin/id"
+    },
+    {
+      "sha256": "sha256:af955ef55333c8fc9c5aa50df91ad1a629d9a79a9afa125cd5e9629585f78015",
+      "inode": 1748,
+      "dev": 2050,
+      "path_hint": "/bin/bash"
+    },
+    {
+      "sha256": "sha256:b5bcad68e567f13e111d24b5dc9a7abc544b4dc81c4817ab5518789461581ac6",
+      "inode": 9001626,
+      "dev": 1048687,
+      "path_hint": "/home/dev/.vscode-server/code-072586267e68ece9a47aa43f8c108e0dcbf44622"
+    },
+    {
+      "sha256": "sha256:bec5950dc8bd999881076b8e5bb2be1cbe45e9f7847d4110ee76fc490dc5d616",
+      "inode": 5135,
+      "dev": 2050,
+      "path_hint": "/usr/bin/getconf"
+    },
+    {
+      "sha256": "sha256:bfd5df90c7f070feab584435f106f254ffffaa268a04de5b5c3bd61d59c092f3",
+      "inode": 10387,
+      "dev": 2050,
+      "path_hint": "/usr/sbin/ldconfig"
+    },
+    {
+      "sha256": "sha256:c27ef5801c7f79253f4c03f7c42cd1c4e664c4c79f4d99fbe32b60e02585c35d",
+      "inode": 2151,
+      "dev": 2050,
+      "path_hint": "/usr/bin/mktemp"
+    },
+    {
+      "sha256": "sha256:c7507963900c83fffa7ca018c5ab28c79804e9f4736ef67e4cbf263acbc82376",
+      "inode": 48430,
+      "dev": 2050,
+      "path_hint": "/usr/sbin/sshd"
+    },
+    {
+      "sha256": "sha256:c883d9c27228339580994a1d0ea960645368c7d1b960a712bd0c655860c2d0d7",
+      "inode": 1849,
+      "dev": 2050,
+      "path_hint": "/bin/sh"
+    },
+    {
+      "sha256": "sha256:c8c89c91b842b5852dea0863836e24d38fec55c263a5b4377e54b40886a1cdb9",
+      "inode": 9001634,
+      "dev": 1048687,
+      "path_hint": "/home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/node"
+    },
+    {
+      "sha256": "sha256:ca886bc4c52cf50b3239de26fed4da7ff1ae591cc075a581edc9f255462c1966",
+      "inode": 2036,
+      "dev": 2050,
+      "path_hint": "/usr/bin/ischroot"
+    },
+    {
+      "sha256": "sha256:ca989d83a5fbfd5765f276ba3e0970927991ab45889b960b557bdbeb6cb0ec1d",
+      "inode": 3483,
+      "dev": 2050,
+      "path_hint": "/usr/bin/sudo"
+    },
+    {
+      "sha256": "sha256:cef720164d9c76c1ed8841eb8d818f0d1228d7345c8121b0f547441dc17be237",
+      "inode": 1722,
+      "dev": 2050,
+      "path_hint": "/usr/local/bin/attested"
+    },
+    {
+      "sha256": "sha256:d1f54612dda30258f1ff887f3ce6068479d88a188176da200c9f608e249f3134",
+      "inode": 1595,
+      "dev": 2050,
+      "path_hint": "/etc/update-motd.d/00-header"
+    },
+    {
+      "sha256": "sha256:d5743af25bcd6ea919261a844b816a67a312a2e1dcdf302aaeead50d8ec3652f",
+      "inode": 5137,
+      "dev": 2050,
+      "path_hint": "/usr/bin/getent"
+    },
+    {
+      "sha256": "sha256:db2758b407abf39d6efda276347d2e6203799952ba43b842c2e7d18e35700875",
+      "inode": 1850,
+      "dev": 2050,
+      "path_hint": "/usr/bin/date"
+    },
+    {
+      "sha256": "sha256:dc3a00a8bbe51dad1e958d6c5f73a59a6ed61a9e37acec36a78a1e817e5cadd4",
+      "inode": 1596,
+      "dev": 2050,
+      "path_hint": "/etc/update-motd.d/10-help-text"
+    },
+    {
+      "sha256": "sha256:e0cf7e677aa546fad67b1579ca1cabb9364caebf7988a59018d0a4e8376cefe7",
+      "inode": 1920,
+      "dev": 2050,
+      "path_hint": "/usr/bin/env"
+    },
+    {
+      "sha256": "sha256:e1dc5ce642b5de0eb7c0c20d3362fd7c9d1748befed8695586f59626108abbd9",
+      "inode": 5517798,
+      "dev": 1048687,
+      "path_hint": "/etc/update-motd.d/60-unminimize"
+    },
+    {
+      "sha256": "sha256:e70291f7cb9dfc5d6a4182a364582a5941cd4845c9416729dd9e47994ba26575",
+      "inode": 2085,
+      "dev": 2050,
+      "path_hint": "/usr/bin/locale-check"
+    },
+    {
+      "sha256": "sha256:ee2d5f97c1dbc39fc28f66383e173ffae55420512ec0f420ff46758e2f1111c9",
+      "inode": 9002315,
+      "dev": 1048687,
+      "path_hint": "/home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/bin/code-server"
+    },
+    {
+      "sha256": "sha256:f2a4948219b81a153d8cafe85383acb2f734cdccac00b633891da1cc8532f8f9",
+      "inode": 10389,
+      "dev": 2050,
+      "path_hint": "/sbin/ldconfig.real"
+    },
+    {
+      "sha256": "sha256:fb7efa5f6b958b44258b08ab860b086aaa0446b8b50564b3d43367b2ba4ed407",
+      "inode": 1993,
+      "dev": 2050,
+      "path_hint": "/usr/bin/grep"
+    }
+  ],
+  "workspace_writes_observed": {
+    "count": 33,
+    "by_op": {
+      "open_write": 33
+    }
+  },
+  "writer_identities": [
+    {
+      "sha256": "sha256:aa6540695d076182256dd6e96c8b302e4d56381e3000bbfd5c71bbdfe94a4942",
+      "inode": 10999,
+      "dev": 2050,
+      "path_hint": "/usr/bin/git"
+    },
+    {
+      "sha256": "sha256:aa6540695d076182256dd6e96c8b302e4d56381e3000bbfd5c71bbdfe94a4942",
+      "inode": 11002,
+      "dev": 2050,
+      "path_hint": "/usr/lib/git-core/git"
+    },
+    {
+      "sha256": "sha256:c8c89c91b842b5852dea0863836e24d38fec55c263a5b4377e54b40886a1cdb9",
+      "inode": 9001634,
+      "dev": 1048687,
+      "path_hint": "/home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/node"
+    }
+  ]
+}

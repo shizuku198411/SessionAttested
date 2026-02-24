@@ -1,6 +1,6 @@
 # PoC Example: Codex Write Session (Fail Case)
 
-[English](./POC_EXAMPLE_CODEX_SESSION.md) | [日本語](docs/jp/POC_EXAMPLE_CODEX_SESSION.md)
+[English](./POC_EXAMPLE_CODEX_SESSION.md) | [日本語](../docs/jp/archive/POC_EXAMPLE_CODEX_SESSION.md)
 
 
 This document summarizes a concrete SessionAttested PoC run in which Codex performed workspace writes and the attestation correctly failed policy verification.
@@ -27,7 +27,7 @@ Observed actions in the session (example):
 
 This document references a masked PoC artifact export:
 
-- [`../../poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/`](../../poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/)
+- [`./v0.1.0/poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/`](./v0.1.0/poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/)
 
 Key files:
 

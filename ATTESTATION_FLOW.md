@@ -81,6 +81,28 @@ What happens:
 - runs `verify`
 - updates `ATTESTED`, `ATTESTED_SUMMARY`, `ATTESTED_POLICY_LAST`, `ATTESTED_WORKSPACE_OBSERVED`
 
+### Step 4. Review recorded results in WebUI (auditor, optional)
+
+```bash
+attested webui
+```
+
+What happens:
+
+- starts a local HTTPS server (self-signed certificate)
+- reads recorded outputs in the workspace (`ATTESTED*`, `.attest_run/state/...`, `attestation.json`)
+- provides a visual review UI for:
+  - session PASS/FAIL status
+  - audit summary counts
+  - executed/writer identities
+  - workspace cumulative observed identities
+  - commit links / session list
+
+Notes:
+
+- the UI is a viewer for recorded results; it does not replace `attest` / `verify`
+- current implementations typically keep `attestation.json` as `latest`; when browsing older sessions, the UI uses `ATTESTED_SUMMARY` for per-session verification status
+
 ## 3. Optional: Policy candidate generation (auditor)
 
 ```bash
@@ -94,7 +116,7 @@ Output:
 
 Use this to bootstrap policy design from observed identities.
 
-## 4. Optional: Manual attest/verify (auditor)
+## 5. Optional: Manual attest/verify (auditor)
 
 If not using `stop --run-attest --run-verify`, run manually:
 
@@ -103,7 +125,7 @@ attested attest
 attested verify --write-result
 ```
 
-## 5. Outputs by Stage (Summary)
+## 6. Outputs by Stage (Summary)
 
 - Session start:
   - `meta.json`
@@ -121,8 +143,11 @@ attested verify --write-result
   - `ATTESTED_SUMMARY`
   - `ATTESTED_POLICY_LAST`
   - `ATTESTED_WORKSPACE_OBSERVED`
+- WebUI review:
+  - no new audit evidence is generated
+  - recorded outputs are rendered for visual inspection (`attested webui`)
 
-## 6. Operational Interpretation (PoC)
+## 7. Operational Interpretation (PoC)
 
 Recommended policy weighting at the PoC stage:
 

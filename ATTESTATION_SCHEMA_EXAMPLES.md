@@ -16,6 +16,8 @@ Covered artifacts:
 - `ATTESTED_POLICY_LAST`
 - `ATTESTED_WORKSPACE_OBSERVED`
 
+These files can be reviewed directly or through `attested webui` (visual viewer for recorded outputs).
+
 Examples are simplified excerpts.
 
 ## 1. `audit_summary.json`
@@ -122,6 +124,10 @@ JSON array appended by `verify --write-result` with per-session verification res
 ]
 ```
 
+Operational note:
+
+- `ATTESTED_SUMMARY` is also used by the WebUI to render per-session verification status when older per-session `attestation.json` files are not available (current implementations commonly keep `attestation.json` as `latest`)
+
 ## 8. `ATTESTED_POLICY_LAST`
 
 Human-readable record of the policy used in the latest `verify` run.
@@ -168,6 +174,7 @@ Note:
 
 - `ATTESTED_OBSERVED` (session-scoped observed list) is not generated in the current implementation
 - for session-level details, use `attestation.json` and `audit_summary.json`
+- WebUI uses this file for cross-session review (`Workspace Observed`)
 
 ## 10. Compatibility Guidance
 

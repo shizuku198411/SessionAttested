@@ -1,0 +1,157 @@
+{
+  "window": {
+    "start_rfc3339": "2026-02-24T01:09:06Z",
+    "end_rfc3339": "2026-02-24T01:10:43Z"
+  },
+  "exec_observed": {
+    "count": 37
+  },
+  "executed_identities": [
+    {
+      "sha256": "sha256:12d09f922c013d07b62cca4fda15a567d94133b196c23193784f1725562ad754",
+      "inode": 1598,
+      "dev": 2050,
+      "path_hint": "/etc/update-motd.d/50-motd-news"
+    },
+    {
+      "sha256": "sha256:22f0ee4504073fb21f9554b7190c68240840d27738113f2943e7c3b3f2676034",
+      "inode": 1815,
+      "dev": 2050,
+      "path_hint": "/usr/bin/clear_console"
+    },
+    {
+      "sha256": "sha256:385052662d7d365d8b47810670d4bc0af0f48c0f5564786a5bc1b819be2dcb06",
+      "inode": 1746,
+      "dev": 2050,
+      "path_hint": "/usr/bin/basename"
+    },
+    {
+      "sha256": "sha256:3fa1c04e29647304817b1ffe9a7600dc80c879ea4c8a9302032799830e0c2133",
+      "inode": 30988,
+      "dev": 2050,
+      "path_hint": "/usr/bin/ps"
+    },
+    {
+      "sha256": "sha256:4acc7a0b3ba8b47f613257b1a806ca9f39c0d1ac261a1be48385ea41116a77de",
+      "inode": 1881,
+      "dev": 2050,
+      "path_hint": "/usr/bin/dircolors"
+    },
+    {
+      "sha256": "sha256:76f61a0c1f44f040454835d45424d0ae740eaf1515709bbfc9b1fc4de6a8ec41",
+      "inode": 2593,
+      "dev": 2050,
+      "path_hint": "/usr/bin/uname"
+    },
+    {
+      "sha256": "sha256:7e104be971478cbf9406c8c718659473122ea8e39723f0aba27e3b28825b8274",
+      "inode": 2094,
+      "dev": 2050,
+      "path_hint": "/usr/bin/ls"
+    },
+    {
+      "sha256": "sha256:93fd34381ad0ba02987818df0f4e6dfdf47d3a606ffd28749e8df48aedde5a68",
+      "inode": 2071,
+      "dev": 2050,
+      "path_hint": "/usr/bin/lesspipe"
+    },
+    {
+      "sha256": "sha256:9506bcf988e064657688589bea0f2c32fa766bf6041c049f5b8c8b877cd8ec37",
+      "inode": 1884,
+      "dev": 2050,
+      "path_hint": "/usr/bin/dirname"
+    },
+    {
+      "sha256": "sha256:a0bf35fb6e8053a4b9026090016d0e8d1e870705cde7c9f750d58445c4aa700d",
+      "inode": 2330,
+      "dev": 2050,
+      "path_hint": "/usr/bin/run-parts"
+    },
+    {
+      "sha256": "sha256:a95219a95160120ffe2f418bb4302280da98184d0e08b4e02c1b2459de7efa69",
+      "inode": 2564,
+      "dev": 2050,
+      "path_hint": "/usr/bin/touch"
+    },
+    {
+      "sha256": "sha256:aa6540695d076182256dd6e96c8b302e4d56381e3000bbfd5c71bbdfe94a4942",
+      "inode": 10999,
+      "dev": 2050,
+      "path_hint": "/usr/bin/git"
+    },
+    {
+      "sha256": "sha256:aa6540695d076182256dd6e96c8b302e4d56381e3000bbfd5c71bbdfe94a4942",
+      "inode": 11002,
+      "dev": 2050,
+      "path_hint": "/usr/lib/git-core/git"
+    },
+    {
+      "sha256": "sha256:af955ef55333c8fc9c5aa50df91ad1a629d9a79a9afa125cd5e9629585f78015",
+      "inode": 1748,
+      "dev": 2050,
+      "path_hint": "/bin/bash"
+    },
+    {
+      "sha256": "sha256:c7507963900c83fffa7ca018c5ab28c79804e9f4736ef67e4cbf263acbc82376",
+      "inode": 48430,
+      "dev": 2050,
+      "path_hint": "/usr/sbin/sshd"
+    },
+    {
+      "sha256": "sha256:c883d9c27228339580994a1d0ea960645368c7d1b960a712bd0c655860c2d0d7",
+      "inode": 1849,
+      "dev": 2050,
+      "path_hint": "/bin/sh"
+    },
+    {
+      "sha256": "sha256:cef720164d9c76c1ed8841eb8d818f0d1228d7345c8121b0f547441dc17be237",
+      "inode": 1722,
+      "dev": 2050,
+      "path_hint": "/usr/local/bin/attested"
+    },
+    {
+      "sha256": "sha256:d1f54612dda30258f1ff887f3ce6068479d88a188176da200c9f608e249f3134",
+      "inode": 1595,
+      "dev": 2050,
+      "path_hint": "/etc/update-motd.d/00-header"
+    },
+    {
+      "sha256": "sha256:dc3a00a8bbe51dad1e958d6c5f73a59a6ed61a9e37acec36a78a1e817e5cadd4",
+      "inode": 1596,
+      "dev": 2050,
+      "path_hint": "/etc/update-motd.d/10-help-text"
+    },
+    {
+      "sha256": "sha256:e0cf7e677aa546fad67b1579ca1cabb9364caebf7988a59018d0a4e8376cefe7",
+      "inode": 1920,
+      "dev": 2050,
+      "path_hint": "/usr/bin/env"
+    },
+    {
+      "sha256": "sha256:e1dc5ce642b5de0eb7c0c20d3362fd7c9d1748befed8695586f59626108abbd9",
+      "inode": 5517798,
+      "dev": 1048687,
+      "path_hint": "/etc/update-motd.d/60-unminimize"
+    },
+    {
+      "sha256": "sha256:fb7efa5f6b958b44258b08ab860b086aaa0446b8b50564b3d43367b2ba4ed407",
+      "inode": 1993,
+      "dev": 2050,
+      "path_hint": "/usr/bin/grep"
+    }
+  ],
+  "workspace_writes_observed": {
+    "count": 5,
+    "by_op": {
+      "open_write": 5
+    }
+  },
+  "writer_identities": [
+    {
+      "sha256": "sha256:aa6540695d076182256dd6e96c8b302e4d56381e3000bbfd5c71bbdfe94a4942",
+      "inode": 10999,
+      "dev": 2050,
+      "path_hint": "/usr/bin/git"
+    }
+  ]
+}

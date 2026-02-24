@@ -2,7 +2,7 @@
 
 [English](./README.md) | [日本語](docs/jp/README.md)
 
-![Version](https://img.shields.io/badge/version-v0.1.0-blue)
+![Version](https://img.shields.io/badge/version-v0.1.1-blue)
 ![Status](https://img.shields.io/badge/status-PoC-orange)
 
 
@@ -11,6 +11,26 @@ English docs for SessionAttested. For the Japanese version, see [`docs/jp/README
 **SessionAttested** is a **policy-based development-session attestation framework** that observes, from the host side (LSM/eBPF), which processes were executed and which executable identities wrote to a development workspace during a session, then binds the result to commits and outputs a signed attestation.
 
 It can be used as a foundation for verifiable development-session auditing and policy enforcement workflows.
+
+## Audit Results View with SessionAttested WebUI
+
+SessionAttested records audit results as files (`audit_summary.json`, `attestation.json`, `ATTESTED_SUMMARY`, `ATTESTED_WORKSPACE_OBSERVED`, etc.), and they can be reviewed visually through a local HTTPS WebUI (`attested webui`).
+
+At a glance, you can inspect:
+
+- session-level attestation / verification result (`PASS` / `FAIL`)
+- audit summary (`exec` / `workspace write` counts, unresolved counters)
+- executed / writer identities (with policy-match highlights)
+- workspace cumulative observed identities (`ATTESTED_WORKSPACE_OBSERVED`)
+- applied policy snapshot and commit links
+
+Example view (session list + PASS/FAIL overview):
+
+![SessionAttested WebUI Sessions](attested_poc/docs/assets/attested_webui_sessions.png)
+
+Example view (fail case / VS Code-forbidden policy):
+
+![SessionAttested WebUI Fail Case](attested_poc/docs/assets/attested_webui_case2_1.png)
 
 ## Status
 
@@ -22,20 +42,22 @@ It can be used as a foundation for verifiable development-session auditing and p
 ## Start Here
 
 - Quick trial (build + run): [`POC_QUICKSTART.md`](POC_QUICKSTART.md)
+- Version changes: [`CHANGELOG.md`](CHANGELOG.md)
 - End-to-end flow (actors + commands): [`ATTESTATION_FLOW.md`](ATTESTATION_FLOW.md)
 - Output formats (what files are generated): [`ATTESTATION_SCHEMA_EXAMPLES.md`](ATTESTATION_SCHEMA_EXAMPLES.md)
-- Concrete fail-case example (Codex write session): [`POC_EXAMPLE_CODEX_SESSION.md`](POC_EXAMPLE_CODEX_SESSION.md)
+- Concrete PoC workspace (VS Code forbidden-tool pass/fail comparison + WebUI screenshots): [`attested_poc/README.md`](attested_poc/README.md)
+- Archived fail-case example (Codex write session, older PoC): [`archive/POC_EXAMPLE_CODEX_SESSION.md`](archive/POC_EXAMPLE_CODEX_SESSION.md)
 
 ## Audit Architecture (PoC)
 
 ```mermaid
-flowchart LR
+flowchart TB
   subgraph Auditor["Auditor-managed Host (Linux)"]
     A1["attested start / stop / attest / verify"]
     A2["Host eBPF Collector<br>(LSM / tracepoint fallback)"]
     A3["State Dir<br>(.attest_run/state/sessions/<session_id>)"]
     A4["Attestor / Verifier<br>(policy evaluation + signing)"]
-    A5["Verification Outputs<br>ATTESTED / ATTESTED_SUMMARY"]
+    A5["Verification Outputs<br>ATTESTED / ATTESTED_SUMMARY / ATTESTED_WORKSPACE_OBSERVED"]
   end
 
   subgraph Container["Dev Container (Docker)"]
@@ -116,7 +138,7 @@ Operationally, the practical weighting is:
 - `forbidden_exec`: primary verdict (prohibited tool execution)
 - `forbidden_writers`: supplementary verdict (writer attribution evidence)
 
-## Operational Feedback (v0.1.0)
+## Operational Feedback (v0.1.1)
 
 Based on actual development use (not only scripted e2e runs), the current PoC already works well as a repeatable audit workflow.
 
@@ -276,10 +298,10 @@ Example (`ATTESTED_SUMMARY`, simplified):
 
 ```json
 {
-  "session_id": "28e005395ea6b8720012b3b091d826e4",
+  "session_id": "e861fd7638377becbf326f9388f7f521",
   "verify_ok": false,
   "attestation_pass": false,
-  "reason": "FORBIDDEN_EXEC_SEEN: count=1 samples=[sha256:f211b442b(.../codex)]"
+  "reason": "FORBIDDEN_EXEC_SEEN: count=5 samples=[sha256:...(.../server/node), ...]"
 }
 ```
 
@@ -305,13 +327,14 @@ See [`ATTESTATION_SCHEMA_EXAMPLES.md`](ATTESTATION_SCHEMA_EXAMPLES.md) for field
 ## Documentation Index
 
 - [`POC_QUICKSTART.md`](POC_QUICKSTART.md) : PoC build and usage quickstart
+- [`CHANGELOG.md`](CHANGELOG.md) : release-by-release changes (v0.1.1+)
 - [`ATTESTATION_FLOW.md`](ATTESTATION_FLOW.md) : actor-based attestation flow and command sequence
 - [`EVENT_COLLECTION.md`](EVENT_COLLECTION.md) : eBPF/collector event collection design
 - [`SIGNING_AND_TAMPER_RESISTANCE.md`](SIGNING_AND_TAMPER_RESISTANCE.md) : signing and tamper-resistance model
 - [`THREAT_MODEL.md`](THREAT_MODEL.md) : threat model and trust assumptions
 - [`POLICY_GUIDE.md`](POLICY_GUIDE.md) : policy design and operations guide
 - [`ATTESTATION_SCHEMA_EXAMPLES.md`](ATTESTATION_SCHEMA_EXAMPLES.md) : output formats and field examples
-- [`POC_EXAMPLE_CODEX_SESSION.md`](POC_EXAMPLE_CODEX_SESSION.md) : concrete Codex fail-case PoC example
+- [`attested_poc/README.md`](attested_poc/README.md) : VS Code forbidden-tool pass/fail comparison PoC workspace (includes WebUI screenshots)
 
 ## License
 

@@ -15,6 +15,8 @@
 - `ATTESTED_SUMMARY`（verify 結果一覧）
 - `ATTESTED_WORKSPACE_OBSERVED`（workspace 累積の観測一覧）
 
+これらの成果物は、ファイルを直接確認するか、`attested webui`（記録済み結果の閲覧 UI）で視覚的に確認できます。
+
 注記:
 
 - ここに記載する JSON は説明用の抜粋/簡略例です
@@ -287,6 +289,8 @@ attestation_pass: false
   - 仕様どおりの「ポリシー違反 fail」の可能性がある
 - `verify_ok=false` かつ `policy_match=false`
   - 別ポリシーで検証している可能性
+- `ATTESTED_SUMMARY` は WebUI の session 一覧 / 結果表示にも使われる
+  - 現行実装では `attestation.json` が `latest` として保持されることが多いため、過去 session の verify 結果表示を補完する役割もある
 
 ## 8. `ATTESTED_POLICY_LAST`
 
@@ -351,6 +355,7 @@ session 単位ではなく、複数 session をまたいだ `exec` / `writer` id
 
 - session ごとの観測一覧ファイル（`ATTESTED_OBSERVED`）は現行実装では生成しません
 - session 単位の詳細は `attestation.json` と `audit_summary.json` を参照します
+- WebUI の `Workspace Observed` 表示はこのファイルを使います
 
 ## 10. フィールド追加・互換性の考え方（PoC）
 

@@ -176,7 +176,33 @@ This means your dev environment (installed tools, caches, editor server state, e
 - `ATTESTED_WORKSPACE_OBSERVED`
   - cumulative observed exec/writer identities across workspace sessions (including unresolved counters/hints)
 
-## 12. Generate a Candidate Policy
+## 12. Review Results in WebUI (Optional but Recommended)
+
+SessionAttested includes a local HTTPS WebUI to inspect session results and cumulative observed identities.
+
+```bash
+attested webui
+```
+
+Or bind to another address/port:
+
+```bash
+attested webui --addr 0.0.0.0:9443
+```
+
+What to check first:
+
+- `Attestation / Verification` card (`PASS` / `FAIL`, reason code)
+- `Audit Summary` card (counts / unresolved)
+- `Executed Identities (Session)` / `Writer Identities (Session)` (policy-hit highlights)
+- `See other sessions` (session-by-session pass/fail comparison)
+
+Notes:
+
+- TLS is self-signed (browser warning expected)
+- Selecting another session in the UI updates the displayed summary/result using `ATTESTED_SUMMARY`
+
+## 13. Generate a Candidate Policy
 
 ```bash
 attested policy candidates
@@ -188,7 +214,7 @@ Output:
 
 Review and rename it to your active policy file.
 
-## 13. Common PoC Pitfalls
+## 14. Common PoC Pitfalls
 
 ### Collector does not start / finalize
 

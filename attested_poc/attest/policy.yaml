@@ -1,0 +1,17 @@
+policy_id: "attested_poc-policy"
+policy_version: 1.0.1
+forbidden_exec:
+    - sha256: sha256:ee2d5f97c1dbc39fc28f66383e173ffae55420512ec0f420ff46758e2f1111c9
+      comment: /home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/bin/code-server
+    - sha256: sha256:c8c89c91b842b5852dea0863836e24d38fec55c263a5b4377e54b40886a1cdb9
+      comment: /home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/node
+    - sha256: sha256:26ce6cceb17ac710ee7253c49ea825c618d4f9e49a135d52b4edce336c40f620
+      comment: /home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/node_modules/@vscode/ripgrep/bin/rg
+    - sha256: sha256:2bfe7e6f1939a446c2a4d21998202a247ce58edb1890e10d97b633a91e5a71b5
+      comment: /home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/out/vs/base/node/cpuUsage.sh
+    - sha256: sha256:b5bcad68e567f13e111d24b5dc9a7abc544b4dc81c4817ab5518789461581ac6
+      comment: /home/dev/.vscode-server/code-072586267e68ece9a47aa43f8c108e0dcbf44622
+forbidden_writers:
+    - sha256: sha256:c8c89c91b842b5852dea0863836e24d38fec55c263a5b4377e54b40886a1cdb9
+      comment: /home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/node
+exceptions: []

@@ -196,6 +196,29 @@ attested verify \
 
 - 署名付き証明の検証結果が監査記録として再利用可能な形で残る
 
+## 7.5. WebUI による監査結果確認（任意 / 監査主体）
+
+### 実行コマンド（ホスト）
+
+```bash
+attested webui
+```
+
+### ここで行われること
+
+- ローカル HTTPS サーバ（自己署名証明書）を起動
+- workspace 内の記録済みファイルを読み込み、監査結果を視覚的に確認できる UI を提供
+  - `ATTESTED_SUMMARY`（session 一覧 / PASS/FAIL）
+  - `audit_summary.json`（監査サマリ）
+  - `executed_identities` / `writer_identities`
+  - `ATTESTED_WORKSPACE_OBSERVED`（workspace 累積）
+  - commit リンクや適用ポリシーの確認
+
+### 注意点
+
+- WebUI は `attest` / `verify` の代替ではなく、記録済み結果の閲覧 UI
+- 現行実装では `attestation.json` は `latest` 保存が基本のため、過去 session の verify 結果表示は `ATTESTED_SUMMARY` を優先して補完する
+
 ## 8. GitHub Artifact 連携（任意 / 監査主体 or CI）
 
 ### 何をするか

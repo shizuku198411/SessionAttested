@@ -211,7 +211,33 @@ attested stop --run-attest --run-verify --verify-write-result
 - `ATTESTED_WORKSPACE_OBSERVED`
   - workspace 全体で累積観測された exec / writer identity（未解決件数/ヒント含む）
 
-## 12. ポリシー候補の生成（PoC で便利）
+## 12. WebUI での確認（任意だが推奨）
+
+SessionAttested には、監査結果を視覚的に確認できるローカル HTTPS WebUI があります。
+
+```bash
+attested webui
+```
+
+別ポート/公開範囲で起動する例:
+
+```bash
+attested webui --addr 0.0.0.0:9443
+```
+
+最初に見るとよい項目:
+
+- `Attestation / Verification` カード（`PASS` / `FAIL`, reason code）
+- `Audit Summary` カード（件数 / 未解決数）
+- `Executed Identities (Session)` / `Writer Identities (Session)`（ポリシーマッチのハイライト）
+- `See other sessions`（セッションごとの PASS/FAIL 比較）
+
+補足:
+
+- TLS は自己署名証明書のため、ブラウザ警告が出ます（想定どおり）
+- UI で別セッションを選択すると `ATTESTED_SUMMARY` を元に表示結果が切り替わります
+
+## 13. ポリシー候補の生成（PoC で便利）
 
 監査結果から candidate policy を生成できます。
 
@@ -225,7 +251,7 @@ attested policy candidates
 
 レビュー後に rename して本番ポリシーとして利用します。
 
-## 13. PoC でよくあるハマりどころ
+## 14. PoC でよくあるハマりどころ
 
 ### collector が起動しない / finalize されない
 

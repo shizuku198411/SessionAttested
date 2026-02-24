@@ -168,6 +168,7 @@ func ensureGitignoreBlock(path string) error {
 		".attest_run/state/sessions/*/audit_exec.jsonl",
 		".attest_run/state/sessions/*/audit_workspace_write.jsonl",
 		".attest_run/state/sessions/*/collector.log",
+		".attest_run/webui/",
 		".attest_run/keys/attestation_priv.pem",
 		".attest_run/state/workspaces/",
 		end,

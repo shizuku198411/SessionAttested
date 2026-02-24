@@ -1,0 +1,63 @@
+defaults:
+  state_dir: ".attest_run/state"
+
+commands:
+  workspace_init:
+    workspace_id: "attested_poc"
+
+  workspace_rm:
+    workspace_id: "attested_poc"
+
+  start:
+    name: "attested-poc-dev"
+    image: "attested_base:latest"
+    pull: false
+    build: true
+    reuse_container: true
+    build_context: "."
+    dockerfile: "attest/Dockerfile"
+    auto_collect: true
+    auto_collect_sudo: true
+    auto_collect_wait: 10s
+    inject_session_env: true
+    mount_attested_bin: true
+    attested_bin_container_path: /usr/local/bin/attested
+    git_user_name: "shizuku198411"
+    git_user_email: "jixeis9541@gmail.com"
+    git_ssh_key_host_path: "/home/pyxgun/.ssh/id_rsa"
+    git_ssh_key_container_path: "/home/dev/.ssh/id_github_attested"
+    build_arg:
+      - "DEV_UID=1000"
+      - "DEV_GID=1003"
+    publish:
+      - "0.0.0.0:2222:22/tcp"
+    workspace_host: "."
+
+  collect:
+    until_stop: true
+    poll: 300ms
+
+  stop:
+    keep_container: true
+    collector_wait: 20s
+    # run_attest: true
+    # run_verify: true
+    # verify_write_result: true
+
+  commit:
+    repo_path: "."
+    message: "attested session commit"
+
+  attest:
+    repo: "shizuku198411/SessionAttested-PoC-Repo"
+    policy: "attest/policy.yaml"
+    out: ".attest_run/attestations/latest"
+    signing_key: ".attest_run/keys/attestation_priv.pem"
+    key_id: "attested_poc-key-1"
+    issuer_name: "attested_poc-attestor"
+    use_binding: true
+
+  verify:
+    policy: "attest/policy.yaml"
+    require_pass: true
+    write_result: true

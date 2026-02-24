@@ -1,6 +1,6 @@
 # PoC Example: Codex Write Session (Fail Case)
 
-[日本語](./POC_EXAMPLE_CODEX_SESSION.md) | [English](../../POC_EXAMPLE_CODEX_SESSION.md)
+[日本語](./POC_EXAMPLE_CODEX_SESSION.md) | [English](../../../archive/POC_EXAMPLE_CODEX_SESSION.md)
 
 
 このドキュメントは、`SessionAttested` の PoC 実行例として、Codex による書き込みを含むセッションの監査ログ/集約結果/署名付き証明の結果をまとめたものです。
@@ -21,23 +21,23 @@
 
 ## 2. 参照ファイル
 
-以下は、公開用にホスト固有情報をマスキングした PoC 成果物コピー（`poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/`）を参照しています。
+以下は、公開用にホスト固有情報をマスキングした PoC 成果物コピー（`archive/v0.1.0/poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/`）を参照しています。
 
 セッション関連ファイル:
 
-- `poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/.attest_run/state/sessions/28e005395ea6b8720012b3b091d826e4/meta.json`
-- `poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/.attest_run/state/sessions/28e005395ea6b8720012b3b091d826e4/audit_exec.jsonl`
-- `poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/.attest_run/state/sessions/28e005395ea6b8720012b3b091d826e4/audit_workspace_write.jsonl`
-- `poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/.attest_run/state/sessions/28e005395ea6b8720012b3b091d826e4/audit_summary.json`
-- `poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/.attest_run/state/sessions/28e005395ea6b8720012b3b091d826e4/event_root.json`
-- `poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/.attest_run/state/sessions/28e005395ea6b8720012b3b091d826e4/commit_binding.json`
+- `archive/v0.1.0/poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/.attest_run/state/sessions/28e005395ea6b8720012b3b091d826e4/meta.json`
+- `archive/v0.1.0/poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/.attest_run/state/sessions/28e005395ea6b8720012b3b091d826e4/audit_exec.jsonl`
+- `archive/v0.1.0/poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/.attest_run/state/sessions/28e005395ea6b8720012b3b091d826e4/audit_workspace_write.jsonl`
+- `archive/v0.1.0/poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/.attest_run/state/sessions/28e005395ea6b8720012b3b091d826e4/audit_summary.json`
+- `archive/v0.1.0/poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/.attest_run/state/sessions/28e005395ea6b8720012b3b091d826e4/event_root.json`
+- `archive/v0.1.0/poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/.attest_run/state/sessions/28e005395ea6b8720012b3b091d826e4/commit_binding.json`
 
 attest/verify 結果:
 
-- `poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/.attest_run/attestations/latest/attestation.json`
-- `poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/ATTESTED`
-- `poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/ATTESTED_SUMMARY`
-- `poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/ATTESTED_POLICY_LAST`
+- `archive/v0.1.0/poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/.attest_run/attestations/latest/attestation.json`
+- `archive/v0.1.0/poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/ATTESTED`
+- `archive/v0.1.0/poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/ATTESTED_SUMMARY`
+- `archive/v0.1.0/poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/ATTESTED_POLICY_LAST`
 
 ## 3. 監査ウィンドウ（集約結果）
 
@@ -130,7 +130,7 @@ attest/verify 結果:
 
 ## 8. Verify 結果（ATTESTED / ATTESTED_SUMMARY）
 
-`poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/ATTESTED_SUMMARY` の該当レコードより:
+`archive/v0.1.0/poc_artifacts/session_28e005395ea6b8720012b3b091d826e4/ATTESTED_SUMMARY` の該当レコードより:
 
 - `session_id`: `28e005395ea6b8720012b3b091d826e4`
 - `verify_ok`: `false`

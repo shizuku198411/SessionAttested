@@ -1,0 +1,79 @@
+[
+  {
+    "attestation_pass": true,
+    "commit_sha": [
+      "7c64b24d7504aa1b2ac361d57cd6a8e66a2aae1d"
+    ],
+    "commit_url": [
+      "https://github.com/shizuku198411/SessionAttested-PoC-Repo/commit/7c64b24d7504aa1b2ac361d57cd6a8e66a2aae1d"
+    ],
+    "policy_checked": true,
+    "policy_id": "attested_poc-policy",
+    "policy_match": true,
+    "policy_path": "attest/policy.yaml",
+    "policy_version": "1.0.0",
+    "repo": "shizuku198411/SessionAttested-PoC-Repo",
+    "ruleset_hash": "sha256:abbef6b49b5cc2b3a6cd0f9210c39175662d09938da5b8f54fbc21af6eb95412",
+    "session_id": "2db0423d7d36c88c7e03e61d5d3c7234",
+    "timestamp": "2026-02-24T00:37:23Z",
+    "verify_ok": true
+  },
+  {
+    "attestation_pass": true,
+    "commit_sha": [
+      "dc599bc9d570b5f4509f2d2d8c52f371c2b84585"
+    ],
+    "commit_url": [
+      "https://github.com/shizuku198411/SessionAttested-PoC-Repo/commit/dc599bc9d570b5f4509f2d2d8c52f371c2b84585"
+    ],
+    "policy_checked": true,
+    "policy_id": "attested_poc-policy",
+    "policy_match": true,
+    "policy_path": "attest/policy.yaml",
+    "policy_version": "1.0.1",
+    "repo": "shizuku198411/SessionAttested-PoC-Repo",
+    "ruleset_hash": "sha256:ca2fb483248d378125189a8ca64ca13978c66bfcf71f4028ec3f6fe58c2c1813",
+    "session_id": "69836cb2cff5f47c102130a912b2b74e",
+    "timestamp": "2026-02-24T01:10:56Z",
+    "verify_ok": true
+  },
+  {
+    "attestation_pass": false,
+    "commit_sha": [
+      "ce9d7eaf52059af995b3524f65d60df52530a319"
+    ],
+    "commit_url": [
+      "https://github.com/shizuku198411/SessionAttested-PoC-Repo/commit/ce9d7eaf52059af995b3524f65d60df52530a319"
+    ],
+    "policy_checked": true,
+    "policy_id": "attested_poc-policy",
+    "policy_match": true,
+    "policy_path": "attest/policy.yaml",
+    "policy_version": "1.0.1",
+    "reason": "FORBIDDEN_EXEC_SEEN: count=5 samples=[sha256:26ce6cceb(/home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/node_modules/@vscode/ripgrep/bin/rg), sha256:2bfe7e6f1(/home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/out/vs/base/node/cpuUsage.sh), sha256:b5bcad68e(/home/dev/.vscode-server/code-072586267e68ece9a47aa43f8c108e0dcbf44622), sha256:c8c89c91b(/home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/node), sha256:ee2d5f97c(/home/dev/.vscode-server/cli/servers/Stable-072586267e68ece9a47aa43f8c108e0dcbf44622/server/bin/code-server)]",
+    "repo": "shizuku198411/SessionAttested-PoC-Repo",
+    "ruleset_hash": "sha256:ca2fb483248d378125189a8ca64ca13978c66bfcf71f4028ec3f6fe58c2c1813",
+    "session_id": "e861fd7638377becbf326f9388f7f521",
+    "timestamp": "2026-02-24T01:20:09Z",
+    "verify_ok": false
+  },
+  {
+    "attestation_pass": true,
+    "commit_sha": [
+      "c9a1afd6f5fc8c5b96ddb9a83abeddcb1715a4c6"
+    ],
+    "commit_url": [
+      "https://github.com/shizuku198411/SessionAttested-PoC-Repo/commit/c9a1afd6f5fc8c5b96ddb9a83abeddcb1715a4c6"
+    ],
+    "policy_checked": true,
+    "policy_id": "attested_poc-policy",
+    "policy_match": true,
+    "policy_path": "attest/policy.yaml",
+    "policy_version": "1.0.1",
+    "repo": "shizuku198411/SessionAttested-PoC-Repo",
+    "ruleset_hash": "sha256:ca2fb483248d378125189a8ca64ca13978c66bfcf71f4028ec3f6fe58c2c1813",
+    "session_id": "2897976e163d8508bd5ac7a8337a98f2",
+    "timestamp": "2026-02-24T01:25:41Z",
+    "verify_ok": true
+  }
+]
