@@ -19,11 +19,15 @@ import (
 )
 
 type attestOut struct {
-	OutDir          string `json:"out_dir"`
-	Pass            bool   `json:"pass"`
-	AttestationPath string `json:"attestation_path"`
-	SignaturePath   string `json:"signature_path"`
-	PublicKeyPath   string `json:"public_key_path"`
+	OutDir               string `json:"out_dir"`
+	Pass                 bool   `json:"pass"`
+	AttestationPath      string `json:"attestation_path"`
+	SignaturePath        string `json:"signature_path"`
+	PublicKeyPath        string `json:"public_key_path"`
+	SessionOutDir        string `json:"session_out_dir,omitempty"`
+	SessionAttestation   string `json:"session_attestation_path,omitempty"`
+	SessionSignaturePath string `json:"session_signature_path,omitempty"`
+	SessionPublicKeyPath string `json:"session_public_key_path,omitempty"`
 }
 
 var commitRe = regexp.MustCompile(`^[0-9a-f]{40}$`)
@@ -187,6 +191,10 @@ func RunAttest(args []string) int {
 	attPath := filepath.Join(*outDir, "attestation.json")
 	sigPath := filepath.Join(*outDir, "attestation.sig")
 	pubPath := filepath.Join(*outDir, "attestation.pub")
+	sessionOutDir := deriveSessionAttestationOutDir(*outDir, *sessionID)
+	sessionAttPath := ""
+	sessionSigPath := ""
+	sessionPubPath := ""
 
 	// Write attestation.json (pretty)
 	if err := state.WriteJSON(attPath, att, 0o644); err != nil {
@@ -212,26 +220,74 @@ func RunAttest(args []string) int {
 		return 2
 	}
 
+	// Keep compatibility with "latest" while also persisting per-session outputs.
+	if sessionOutDir != "" {
+		if err := os.MkdirAll(sessionOutDir, 0o755); err != nil {
+			fmt.Fprintln(os.Stderr, "error: mkdir session attestation out:", err)
+			return 2
+		}
+		sessionAttPath = filepath.Join(sessionOutDir, "attestation.json")
+		sessionSigPath = filepath.Join(sessionOutDir, "attestation.sig")
+		sessionPubPath = filepath.Join(sessionOutDir, "attestation.pub")
+		if err := state.WriteJSON(sessionAttPath, att, 0o644); err != nil {
+			fmt.Fprintln(os.Stderr, "error: write session attestation:", err)
+			return 2
+		}
+		if err := state.WriteJSON(sessionSigPath, env, 0o644); err != nil {
+			fmt.Fprintln(os.Stderr, "error: write session signature:", err)
+			return 2
+		}
+		if err := crypto.SaveEd25519PublicKey(sessionPubPath, pub); err != nil {
+			fmt.Fprintln(os.Stderr, "error: write session public key:", err)
+			return 2
+		}
+	}
+
 	// Output
 	if *jsonOut {
 		out := attestOut{
-			OutDir:          *outDir,
-			Pass:            eval.Pass,
-			AttestationPath: attPath,
-			SignaturePath:   sigPath,
-			PublicKeyPath:   pubPath,
+			OutDir:               *outDir,
+			Pass:                 eval.Pass,
+			AttestationPath:      attPath,
+			SignaturePath:        sigPath,
+			PublicKeyPath:        pubPath,
+			SessionOutDir:        sessionOutDir,
+			SessionAttestation:   sessionAttPath,
+			SessionSignaturePath: sessionSigPath,
+			SessionPublicKeyPath: sessionPubPath,
 		}
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetEscapeHTML(false)
 		_ = enc.Encode(out)
 	} else {
 		fmt.Printf("wrote:\n  %s\n  %s\n  %s\n", attPath, sigPath, pubPath)
+		if sessionOutDir != "" {
+			fmt.Printf("wrote (session):\n  %s\n  %s\n  %s\n", sessionAttPath, sessionSigPath, sessionPubPath)
+		}
 		fmt.Printf("attestation pass=%v\n", eval.Pass)
 	}
 	chownPathToSudoOwnerBestEffort(*outDir)
+	if sessionOutDir != "" {
+		chownPathToSudoOwnerBestEffort(sessionOutDir)
+	}
 
 	if eval.Pass {
 		return 0
 	}
 	return 6
+}
+
+func deriveSessionAttestationOutDir(outDir, sessionID string) string {
+	if sessionID == "" {
+		return ""
+	}
+	clean := filepath.Clean(outDir)
+	if filepath.Base(clean) != "latest" {
+		return ""
+	}
+	parent := filepath.Dir(clean)
+	if filepath.Base(parent) != "attestations" {
+		return ""
+	}
+	return filepath.Join(parent, "sessions", sessionID)
 }

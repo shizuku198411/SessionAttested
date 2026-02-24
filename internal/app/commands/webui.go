@@ -17,6 +17,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -40,6 +41,7 @@ type webUIView struct {
 	CommitBindingPath      string
 	Attestation            *model.Attestation
 	AuditSummary           *model.AuditSummary
+	WorkspaceFileRows      []model.WorkspaceWriteFile
 	CommitBinding          map[string]any
 	CommitBindingsJSONL    []map[string]any
 	AttestedSummaryRecords []map[string]any
@@ -47,6 +49,9 @@ type webUIView struct {
 	WorkspaceObserved      map[string]any
 	WorkspaceExecRows      []workspaceObservedRow
 	WorkspaceWriterRows    []workspaceObservedRow
+	ForbiddenLineageRows   []forbiddenLineageRow
+	CommitFileRows         []commitFileRow
+	SessionCorrelationPath string
 	AttestedPolicyLast     string
 	AttestedPolicyParsed   *policy.Policy
 	SummaryCommitLinks     []string
@@ -74,25 +79,75 @@ type workspaceObservedRow struct {
 	CurrentSessionHit bool
 }
 
+type forbiddenLineageRow struct {
+	FilePath        string
+	WriteCount      uint64
+	WriteComms      []string
+	MatchedExecs    []forbiddenExecMatch
+	WriterPathHints []string
+}
+
+type forbiddenExecMatch struct {
+	PathHint string
+	SHA256   string
+	Pid      int
+}
+
+type auditExecLogRow struct {
+	Pid  uint32 `json:"pid"`
+	Ppid uint32 `json:"ppid"`
+	Comm string `json:"comm"`
+	Fn   string `json:"filename"`
+}
+
+type auditWriteLogRow struct {
+	Pid  uint32 `json:"pid"`
+	Ppid uint32 `json:"ppid"`
+	Comm string `json:"comm"`
+	Fn   string `json:"filename"`
+	Op   string `json:"op"`
+}
+
+type commitFileRow struct {
+	FilePath           string
+	CommitSHAs         []string
+	WriteComms         []string
+	WriterPathHints    []string
+	ForbiddenLineage   bool
+	WriterPolicyMatch  bool
+	PolicyMatchKind    string
+	ForbiddenMatchInfo []string
+}
+
+type sessionCorrelationArtifact struct {
+	SchemaVersion        string                `json:"schema_version"`
+	GeneratedAt          string                `json:"generated_at"`
+	SessionID            string                `json:"session_id"`
+	ForbiddenLineageRows []forbiddenLineageRow `json:"forbidden_lineage_rows,omitempty"`
+	CommitFileRows       []commitFileRow       `json:"commit_file_rows,omitempty"`
+}
+
 type policyRuleRow struct {
 	Comment string
 	SHA256  string
 }
 
 type webUISummaryView struct {
-	SessionID       string
-	Timestamp       string
-	Repo            string
-	CommitSHAs      []string
-	CommitURLs      []string
-	Conclusion      string
-	ConclusionClass string
-	Reason          string
-	ReasonCode      string
-	VerifyOKText    string
-	AttPassText     string
-	PolicyChecked   string
-	PolicyMatch     string
+	SessionID                string
+	Timestamp                string
+	Repo                     string
+	CommitSHAs               []string
+	CommitURLs               []string
+	Conclusion               string
+	ConclusionClass          string
+	Reason                   string
+	ReasonCode               string
+	VerifyOKText             string
+	AttPassText              string
+	PolicyChecked            string
+	PolicyMatch              string
+	AuditLogIntegrityChecked string
+	AuditLogIntegrityOK      string
 }
 
 func RunWebUI(args []string) int {
@@ -207,6 +262,12 @@ func loadWebUIView(runDir string, st state.StateDir, sessionID, addr string) web
 			v.AuditSummaryPath = sumPath
 			v.SessionWindowStart = s.Window.StartRFC3339
 			v.SessionWindowEnd = s.Window.EndRFC3339
+			for _, wf := range s.WorkspaceFiles {
+				if isHiddenWorkspacePathForUI(wf.Path) {
+					continue
+				}
+				v.WorkspaceFileRows = append(v.WorkspaceFileRows, wf)
+			}
 		} else {
 			v.Errors = append(v.Errors, "audit_summary.json: "+err.Error())
 		}
@@ -259,6 +320,25 @@ func loadWebUIView(runDir string, st state.StateDir, sessionID, addr string) web
 		v.WorkspaceExecRows = parseWorkspaceObservedRows(m, "exec_identities", execSet)
 		v.WorkspaceWriterRows = parseWorkspaceObservedRows(m, "writer_identities", writerSet)
 	}
+	if sessionID != "" {
+		if art, path, err := readSessionCorrelationArtifact(runDir, sessionID); err == nil {
+			v.SessionCorrelationPath = path
+			v.ForbiddenLineageRows = art.ForbiddenLineageRows
+			v.CommitFileRows = art.CommitFileRows
+		}
+	}
+	if sessionID != "" && v.AuditSummary != nil && len(v.ForbiddenLineageRows) == 0 && len(v.ForbiddenExecSet) > 0 {
+		if len(v.ForbiddenLineageRows) == 0 {
+			v.ForbiddenLineageRows = buildForbiddenExecLineageRows(st, sessionID, v.AuditSummary, v.ForbiddenExecSet)
+		}
+	}
+	if v.Attestation != nil && len(v.CommitFileRows) == 0 {
+		if rows, err := buildCommitFileRows(v.Attestation, v.WorkspaceFileRows, v.ForbiddenLineageRows, v.ForbiddenWriterSet); err == nil {
+			v.CommitFileRows = rows
+		} else {
+			v.Errors = append(v.Errors, "commit file mapping: "+err.Error())
+		}
+	}
 	if b, err := os.ReadFile(filepath.Join(".", "ATTESTED_POLICY_LAST")); err == nil {
 		v.AttestedPolicyLast = string(b)
 		if p, err := policy.ParsePolicy(b); err == nil {
@@ -271,6 +351,37 @@ func loadWebUIView(runDir string, st state.StateDir, sessionID, addr string) web
 		v.SessionID = v.Attestation.Session.SessionID
 	}
 	return v
+}
+
+func readSessionCorrelationArtifact(runDir, sessionID string) (*sessionCorrelationArtifact, string, error) {
+	sessionID = strings.TrimSpace(sessionID)
+	if sessionID == "" {
+		return nil, "", fmt.Errorf("empty session id")
+	}
+	path := filepath.Join(runDir, "reports", "sessions", sessionID, "session_correlation.json")
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return nil, "", err
+	}
+	var art sessionCorrelationArtifact
+	if err := json.Unmarshal(b, &art); err != nil {
+		return nil, "", err
+	}
+	return &art, path, nil
+}
+
+func isHiddenWorkspacePathForUI(p string) bool {
+	p = strings.TrimSpace(p)
+	if p == "" {
+		return false
+	}
+	if p == "/workspace/.git" || strings.HasPrefix(p, "/workspace/.git/") {
+		return true
+	}
+	if p == "/workspace/ATTESTED" || p == "/workspace/ATTESTED_SUMMARY" || p == "/workspace/ATTESTED_POLICY_LAST" || p == "/workspace/ATTESTED_WORKSPACE_OBSERVED" {
+		return true
+	}
+	return strings.HasPrefix(p, "/workspace/ATTESTED_")
 }
 
 func listSessions(st state.StateDir) []webUISessionRow {
@@ -319,6 +430,13 @@ func resolveAttestationForSession(runDir, sessionID string) (string, model.Attes
 			return "", model.Attestation{}, err
 		}
 		return latestPath, att, nil
+	}
+
+	// Preferred path (v0.1.2+ behavior): per-session attestation store.
+	sessionPath := filepath.Join(runDir, "attestations", "sessions", sessionID, "attestation.json")
+	var sessAtt model.Attestation
+	if err := state.ReadJSON(sessionPath, &sessAtt); err == nil && sessAtt.Session.SessionID == sessionID {
+		return sessionPath, sessAtt, nil
 	}
 
 	type cand struct {
@@ -433,14 +551,16 @@ func selectSummaryForSession(recs []map[string]any, sessionID string) *webUISumm
 		return nil
 	}
 	out := &webUISummaryView{
-		SessionID:     strings.TrimSpace(fmt.Sprint(rec["session_id"])),
-		Timestamp:     strings.TrimSpace(fmt.Sprint(rec["timestamp"])),
-		Repo:          strings.TrimSpace(fmt.Sprint(rec["repo"])),
-		Reason:        cleanText(rec["reason"]),
-		VerifyOKText:  boolFieldText(rec, "verify_ok"),
-		AttPassText:   boolFieldText(rec, "attestation_pass"),
-		PolicyChecked: boolFieldText(rec, "policy_checked"),
-		PolicyMatch:   boolFieldText(rec, "policy_match"),
+		SessionID:                strings.TrimSpace(fmt.Sprint(rec["session_id"])),
+		Timestamp:                strings.TrimSpace(fmt.Sprint(rec["timestamp"])),
+		Repo:                     strings.TrimSpace(fmt.Sprint(rec["repo"])),
+		Reason:                   cleanText(rec["reason"]),
+		VerifyOKText:             boolFieldText(rec, "verify_ok"),
+		AttPassText:              boolFieldText(rec, "attestation_pass"),
+		PolicyChecked:            boolFieldText(rec, "policy_checked"),
+		PolicyMatch:              boolFieldText(rec, "policy_match"),
+		AuditLogIntegrityChecked: boolFieldText(rec, "audit_log_integrity_checked"),
+		AuditLogIntegrityOK:      boolFieldText(rec, "audit_log_integrity_ok"),
 	}
 	out.ReasonCode = summaryReasonCode(out.Reason)
 	out.CommitSHAs = stringSliceField(rec, "commit_sha")
@@ -693,6 +813,431 @@ func anyToInt64(v any) int64 {
 	}
 }
 
+func buildForbiddenExecLineageRows(st state.StateDir, sessionID string, sum *model.AuditSummary, forbiddenExecSet map[string]struct{}) []forbiddenLineageRow {
+	if sum == nil || sessionID == "" || len(forbiddenExecSet) == 0 {
+		return nil
+	}
+	execRows, err := readAuditExecLogRows(st.SessionDir(sessionID))
+	if err != nil || len(execRows) == 0 {
+		return nil
+	}
+	writeRows, err := readAuditWriteLogRows(st.SessionDir(sessionID))
+	if err != nil || len(writeRows) == 0 {
+		return nil
+	}
+
+	// Map executable path -> observed identity SHA for this session.
+	pathToIDs := map[string][]model.ExecutableIdentity{}
+	for _, id := range sum.ExecutedIdentities {
+		p := normalizeExecPathHint(id.PathHint)
+		if p == "" {
+			continue
+		}
+		pathToIDs[p] = append(pathToIDs[p], id)
+	}
+
+	pidParent := map[int]int{}
+	forbiddenByPID := map[int][]forbiddenExecMatch{}
+	for _, e := range execRows {
+		pid := int(e.Pid)
+		ppid := int(e.Ppid)
+		pidParent[pid] = ppid
+		fn := normalizeExecPathHint(e.Fn)
+		if fn == "" {
+			continue
+		}
+		for _, id := range pathToIDs[fn] {
+			if _, ok := forbiddenExecSet[id.SHA256]; !ok {
+				continue
+			}
+			m := forbiddenExecMatch{PathHint: id.PathHint, SHA256: id.SHA256, Pid: pid}
+			// de-dup per pid
+			exists := false
+			for _, x := range forbiddenByPID[pid] {
+				if x.SHA256 == m.SHA256 && x.PathHint == m.PathHint {
+					exists = true
+					break
+				}
+			}
+			if !exists {
+				forbiddenByPID[pid] = append(forbiddenByPID[pid], m)
+			}
+		}
+	}
+	if len(forbiddenByPID) == 0 {
+		return nil
+	}
+
+	fileWriterHints := map[string][]string{}
+	for _, wf := range sum.WorkspaceFiles {
+		if wf.Path == "" {
+			continue
+		}
+		if isHiddenWorkspacePathForUI(wf.Path) {
+			continue
+		}
+		seen := map[string]struct{}{}
+		for _, w := range wf.Writers {
+			if p := strings.TrimSpace(w.PathHint); p != "" {
+				seen[p] = struct{}{}
+			}
+		}
+		if len(seen) == 0 {
+			continue
+		}
+		var hints []string
+		for p := range seen {
+			hints = append(hints, p)
+		}
+		sort.Strings(hints)
+		fileWriterHints[wf.Path] = hints
+	}
+
+	type agg struct {
+		file        string
+		writeCount  uint64
+		comms       map[string]struct{}
+		matches     map[string]forbiddenExecMatch
+		writerHints []string
+	}
+	fileAgg := map[string]*agg{}
+
+	for _, w := range writeRows {
+		matches := correlateForbiddenExecAncestors(int(w.Pid), pidParent, forbiddenByPID)
+		if len(matches) == 0 {
+			continue
+		}
+		fn := strings.TrimSpace(w.Fn)
+		if fn == "" {
+			continue
+		}
+		if isHiddenWorkspacePathForUI(fn) {
+			continue
+		}
+		a := fileAgg[fn]
+		if a == nil {
+			a = &agg{
+				file:        fn,
+				comms:       map[string]struct{}{},
+				matches:     map[string]forbiddenExecMatch{},
+				writerHints: append([]string(nil), fileWriterHints[fn]...),
+			}
+			fileAgg[fn] = a
+		}
+		a.writeCount++
+		if c := strings.TrimSpace(w.Comm); c != "" {
+			a.comms[c] = struct{}{}
+		}
+		for _, m := range matches {
+			k := m.SHA256 + "|" + m.PathHint
+			a.matches[k] = m
+		}
+	}
+
+	rows := make([]forbiddenLineageRow, 0, len(fileAgg))
+	for _, a := range fileAgg {
+		row := forbiddenLineageRow{
+			FilePath:        a.file,
+			WriteCount:      a.writeCount,
+			WriterPathHints: a.writerHints,
+		}
+		for c := range a.comms {
+			row.WriteComms = append(row.WriteComms, c)
+		}
+		sort.Strings(row.WriteComms)
+		for _, m := range a.matches {
+			row.MatchedExecs = append(row.MatchedExecs, m)
+		}
+		sort.Slice(row.MatchedExecs, func(i, j int) bool {
+			if row.MatchedExecs[i].PathHint != row.MatchedExecs[j].PathHint {
+				return row.MatchedExecs[i].PathHint < row.MatchedExecs[j].PathHint
+			}
+			if row.MatchedExecs[i].SHA256 != row.MatchedExecs[j].SHA256 {
+				return row.MatchedExecs[i].SHA256 < row.MatchedExecs[j].SHA256
+			}
+			return row.MatchedExecs[i].Pid < row.MatchedExecs[j].Pid
+		})
+		rows = append(rows, row)
+	}
+	sort.Slice(rows, func(i, j int) bool {
+		if rows[i].WriteCount != rows[j].WriteCount {
+			return rows[i].WriteCount > rows[j].WriteCount
+		}
+		return rows[i].FilePath < rows[j].FilePath
+	})
+	return rows
+}
+
+func correlateForbiddenExecAncestors(pid int, parent map[int]int, forbiddenByPID map[int][]forbiddenExecMatch) []forbiddenExecMatch {
+	if pid <= 0 {
+		return nil
+	}
+	seenPIDs := map[int]struct{}{}
+	seenMatch := map[string]struct{}{}
+	var out []forbiddenExecMatch
+	cur := pid
+	for depth := 0; depth < 64 && cur > 0; depth++ {
+		if _, ok := seenPIDs[cur]; ok {
+			break
+		}
+		seenPIDs[cur] = struct{}{}
+		for _, m := range forbiddenByPID[cur] {
+			k := fmt.Sprintf("%s|%s|%d", m.SHA256, m.PathHint, m.Pid)
+			if _, ok := seenMatch[k]; ok {
+				continue
+			}
+			seenMatch[k] = struct{}{}
+			out = append(out, m)
+		}
+		next, ok := parent[cur]
+		if !ok || next == cur {
+			break
+		}
+		cur = next
+	}
+	return out
+}
+
+func readAuditExecLogRows(sessionDir string) ([]auditExecLogRow, error) {
+	path := filepath.Join(sessionDir, "audit_exec.jsonl")
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	lines := strings.Split(string(b), "\n")
+	out := make([]auditExecLogRow, 0, len(lines))
+	for _, ln := range lines {
+		ln = strings.TrimSpace(ln)
+		if ln == "" {
+			continue
+		}
+		var r auditExecLogRow
+		if err := json.Unmarshal([]byte(ln), &r); err != nil {
+			continue
+		}
+		out = append(out, r)
+	}
+	return out, nil
+}
+
+func readAuditWriteLogRows(sessionDir string) ([]auditWriteLogRow, error) {
+	path := filepath.Join(sessionDir, "audit_workspace_write.jsonl")
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	lines := strings.Split(string(b), "\n")
+	out := make([]auditWriteLogRow, 0, len(lines))
+	for _, ln := range lines {
+		ln = strings.TrimSpace(ln)
+		if ln == "" {
+			continue
+		}
+		var r auditWriteLogRow
+		if err := json.Unmarshal([]byte(ln), &r); err != nil {
+			continue
+		}
+		out = append(out, r)
+	}
+	return out, nil
+}
+
+func normalizeExecPathHint(s string) string {
+	s = strings.TrimSpace(s)
+	s = strings.TrimSuffix(s, " (deleted)")
+	return s
+}
+
+func buildCommitFileRows(att *model.Attestation, workspaceFiles []model.WorkspaceWriteFile, forbiddenRows []forbiddenLineageRow, forbiddenWriterSet map[string]struct{}) ([]commitFileRow, error) {
+	if att == nil {
+		return nil, nil
+	}
+	commits := commitSHAsFromAttestation(att)
+	if len(commits) == 0 {
+		return nil, nil
+	}
+	changed, err := gitChangedFilesByCommit(commits)
+	if err != nil {
+		return nil, err
+	}
+
+	workspaceByRel := map[string]model.WorkspaceWriteFile{}
+	containerPath := strings.TrimRight(strings.TrimSpace(att.Session.Workspace.ContainerPath), "/")
+	if containerPath == "" {
+		containerPath = "/workspace"
+	}
+	for _, wf := range workspaceFiles {
+		rel := workspaceFileToRepoRel(containerPath, wf.Path)
+		if rel == "" {
+			continue
+		}
+		workspaceByRel[rel] = wf
+	}
+
+	forbiddenByRel := map[string]forbiddenLineageRow{}
+	for _, fr := range forbiddenRows {
+		rel := workspaceFileToRepoRel(containerPath, fr.FilePath)
+		if rel == "" {
+			continue
+		}
+		forbiddenByRel[rel] = fr
+	}
+
+	allFiles := map[string]struct{}{}
+	fileCommits := map[string][]string{}
+	for sha, files := range changed {
+		for _, f := range files {
+			if f == "" {
+				continue
+			}
+			allFiles[f] = struct{}{}
+			fileCommits[f] = appendUnique(fileCommits[f], sha)
+		}
+	}
+
+	rows := make([]commitFileRow, 0, len(allFiles))
+	for f := range allFiles {
+		row := commitFileRow{
+			FilePath:   f,
+			CommitSHAs: append([]string(nil), fileCommits[f]...),
+		}
+		if wf, ok := workspaceByRel[f]; ok {
+			row.WriteComms = append([]string(nil), wf.Comms...)
+			for _, w := range wf.Writers {
+				if p := strings.TrimSpace(w.PathHint); p != "" {
+					row.WriterPathHints = appendUnique(row.WriterPathHints, p)
+				}
+				if len(forbiddenWriterSet) > 0 {
+					if _, ok := forbiddenWriterSet[w.SHA256]; ok {
+						row.WriterPolicyMatch = true
+					}
+				}
+			}
+			sort.Strings(row.WriteComms)
+			sort.Strings(row.WriterPathHints)
+		}
+		if fr, ok := forbiddenByRel[f]; ok {
+			row.ForbiddenLineage = true
+			for _, m := range fr.MatchedExecs {
+				label := strings.TrimSpace(m.PathHint)
+				if label == "" {
+					label = m.SHA256
+				}
+				row.ForbiddenMatchInfo = appendUnique(row.ForbiddenMatchInfo, label)
+			}
+			sort.Strings(row.ForbiddenMatchInfo)
+			if len(row.WriteComms) == 0 && len(fr.WriteComms) > 0 {
+				row.WriteComms = append([]string(nil), fr.WriteComms...)
+			}
+		}
+		switch {
+		case row.ForbiddenLineage && row.WriterPolicyMatch:
+			row.PolicyMatchKind = "exec+writer"
+		case row.ForbiddenLineage:
+			row.PolicyMatchKind = "exec"
+		case row.WriterPolicyMatch:
+			row.PolicyMatchKind = "writer"
+		default:
+			row.PolicyMatchKind = "-"
+		}
+		rows = append(rows, row)
+	}
+	sort.Slice(rows, func(i, j int) bool {
+		if rows[i].ForbiddenLineage != rows[j].ForbiddenLineage {
+			return rows[i].ForbiddenLineage
+		}
+		return rows[i].FilePath < rows[j].FilePath
+	})
+	return rows, nil
+}
+
+func commitSHAsFromAttestation(att *model.Attestation) []string {
+	if att == nil {
+		return nil
+	}
+	var out []string
+	if s := strings.TrimSpace(att.Subject.CommitSHA); s != "" {
+		out = appendUnique(out, s)
+	}
+	for _, b := range att.Session.CommitBindings {
+		if s := strings.TrimSpace(b.CommitSHA); s != "" {
+			out = appendUnique(out, s)
+		}
+	}
+	return out
+}
+
+func gitChangedFilesByCommit(commits []string) (map[string][]string, error) {
+	out := make(map[string][]string, len(commits))
+	for _, sha := range commits {
+		sha = strings.TrimSpace(sha)
+		if sha == "" {
+			continue
+		}
+		cmd := exec.Command("git", "show", "--name-only", "--pretty=format:", "--diff-filter=ACMRTUXB", sha)
+		b, err := cmd.Output()
+		if err != nil {
+			return nil, fmt.Errorf("git show %s: %w", sha, err)
+		}
+		lines := strings.Split(string(b), "\n")
+		for _, ln := range lines {
+			ln = strings.TrimSpace(ln)
+			if ln == "" {
+				continue
+			}
+			if isHiddenCommitFilePathForUI(ln) {
+				continue
+			}
+			out[sha] = appendUnique(out[sha], ln)
+		}
+		sort.Strings(out[sha])
+	}
+	return out, nil
+}
+
+func workspaceFileToRepoRel(containerWorkspacePath, workspaceFile string) string {
+	workspaceFile = strings.TrimSpace(workspaceFile)
+	if workspaceFile == "" {
+		return ""
+	}
+	if isHiddenWorkspacePathForUI(workspaceFile) {
+		return ""
+	}
+	prefix := strings.TrimRight(containerWorkspacePath, "/")
+	if prefix == "" {
+		prefix = "/workspace"
+	}
+	if workspaceFile == prefix {
+		return ""
+	}
+	if strings.HasPrefix(workspaceFile, prefix+"/") {
+		return strings.TrimPrefix(workspaceFile, prefix+"/")
+	}
+	return ""
+}
+
+func isHiddenRepoPathForUI(p string) bool {
+	p = strings.TrimSpace(strings.TrimPrefix(p, "./"))
+	if p == "" {
+		return false
+	}
+	return p == ".git" || strings.HasPrefix(p, ".git/")
+}
+
+func isHiddenCommitFilePathForUI(p string) bool {
+	p = strings.TrimSpace(strings.TrimPrefix(p, "./"))
+	if p == "" {
+		return false
+	}
+	if isHiddenRepoPathForUI(p) {
+		return true
+	}
+	if p == "ATTESTED" || strings.HasPrefix(p, "ATTESTED_") {
+		return true
+	}
+	return p == ".attest_run" || strings.HasPrefix(p, ".attest_run/")
+}
+
 func ensureSelfSignedTLS(certPath, keyPath string) error {
 	if _, err := os.Stat(certPath); err == nil {
 		if _, err2 := os.Stat(keyPath); err2 == nil {
@@ -887,7 +1432,58 @@ var webUITmpl = template.Must(template.New("webui").Funcs(template.FuncMap{
   <div class="grid">
     <div class="card">
       <h2>Attestation / Verification</h2>
-      {{if .SelectedSummary}}
+      {{if .Attestation}}
+        <div>Repo: <code>{{.Attestation.Subject.Repo}}</code></div>
+        <div>Commits:
+          {{if .Attestation.Session.CommitBindings}}
+            <div class="mono" style="margin-top:4px;">
+              {{range $i, $c := .Attestation.Session.CommitBindings}}{{if $i}}, {{end}}{{$c.CommitSHA}}{{end}}
+            </div>
+          {{else if .Attestation.Subject.CommitSHA}}
+            <div class="mono" style="margin-top:4px;">{{.Attestation.Subject.CommitSHA}}</div>
+          {{else}}
+            <span class="muted">-</span>
+          {{end}}
+        </div>
+        <div>Conclusion:
+          {{if .Attestation.Conclusion.Pass}}<span class="ok">PASS</span>{{else}}<span class="ng">FAIL</span>{{end}}
+        </div>
+        <div>Reason:
+          {{if .Attestation.Conclusion.Reasons}}
+            {{if .Attestation.Conclusion.Pass}}
+              {{with index .Attestation.Conclusion.Reasons 0}}<code>{{.Code}}</code>{{end}}
+            {{else}}
+              {{with index .Attestation.Conclusion.Reasons 0}}<code class="ng">{{.Code}}</code>{{end}}
+            {{end}}
+          {{else}}<span class="muted">-</span>{{end}}
+        </div>
+        {{if .SelectedSummary}}
+        <div>
+          verify_ok:
+          {{if eq .SelectedSummary.VerifyOKText "true"}}<strong class="ok">true</strong>{{else if eq .SelectedSummary.VerifyOKText "false"}}<strong class="ng">false</strong>{{else}}<strong class="muted">-</strong>{{end}}
+          /
+          attestation_pass:
+          {{if eq .SelectedSummary.AttPassText "true"}}<strong class="ok">true</strong>{{else if eq .SelectedSummary.AttPassText "false"}}<strong class="ng">false</strong>{{else}}<strong class="muted">-</strong>{{end}}
+        </div>
+        <div>
+          policy_checked:
+          {{if eq .SelectedSummary.PolicyChecked "true"}}<strong class="ok">true</strong>{{else if eq .SelectedSummary.PolicyChecked "false"}}<strong class="ng">false</strong>{{else}}<strong class="muted">-</strong>{{end}}
+          /
+          policy_match:
+          {{if eq .SelectedSummary.PolicyMatch "true"}}<strong class="ok">true</strong>{{else if eq .SelectedSummary.PolicyMatch "false"}}<strong class="ng">false</strong>{{else}}<strong class="muted">-</strong>{{end}}
+        </div>
+        <div>
+          raw_log_integrity:
+          {{if eq .SelectedSummary.AuditLogIntegrityChecked "true"}}
+            {{if eq .SelectedSummary.AuditLogIntegrityOK "true"}}<strong class="ok">PASS</strong>{{else if eq .SelectedSummary.AuditLogIntegrityOK "false"}}<strong class="ng">FAIL</strong>{{else}}<strong class="muted">-</strong>{{end}}
+          {{else}}
+            <strong class="muted">not checked</strong>
+          {{end}}
+        </div>
+        {{if .SelectedSummary.Timestamp}}<div class="muted mono" style="margin-top:8px">ATTESTED_SUMMARY timestamp: {{.SelectedSummary.Timestamp}}</div>{{end}}
+        {{end}}
+        {{if .AttestationPath}}<div class="muted mono" style="margin-top:4px">attestation source: {{.AttestationPath}}</div>{{end}}
+      {{else if .SelectedSummary}}
         <div>Repo: <code>{{.SelectedSummary.Repo}}</code></div>
         <div>Commits:
           {{if .SelectedSummary.CommitSHAs}}
@@ -900,7 +1496,9 @@ var webUITmpl = template.Must(template.New("webui").Funcs(template.FuncMap{
           {{if .SelectedSummary.ConclusionClass}}<span class="{{.SelectedSummary.ConclusionClass}}">{{.SelectedSummary.Conclusion}}</span>{{else}}{{.SelectedSummary.Conclusion}}{{end}}
         </div>
         <div>Reason:
-          {{if .SelectedSummary.ReasonCode}}<code class="ng">{{.SelectedSummary.ReasonCode}}</code>{{else}}<span class="muted">-</span>{{end}}
+          {{if .SelectedSummary.ReasonCode}}
+            {{if eq .SelectedSummary.Conclusion "FAIL"}}<code class="ng">{{.SelectedSummary.ReasonCode}}</code>{{else}}<code>{{.SelectedSummary.ReasonCode}}</code>{{end}}
+          {{else}}<span class="muted">-</span>{{end}}
         </div>
         <div>
           verify_ok:
@@ -916,16 +1514,15 @@ var webUITmpl = template.Must(template.New("webui").Funcs(template.FuncMap{
           policy_match:
           {{if eq .SelectedSummary.PolicyMatch "true"}}<strong class="ok">true</strong>{{else if eq .SelectedSummary.PolicyMatch "false"}}<strong class="ng">false</strong>{{else}}<strong class="muted">-</strong>{{end}}
         </div>
-        {{if .SelectedSummary.Timestamp}}<div class="muted mono" style="margin-top:8px">ATTESTED_SUMMARY timestamp: {{.SelectedSummary.Timestamp}}</div>{{end}}
-        {{if .AttestationPath}}<div class="muted mono" style="margin-top:4px">attestation source: {{.AttestationPath}}</div>{{end}}
-      {{else if .Attestation}}
-        <div>Repo: <code>{{.Attestation.Subject.Repo}}</code></div>
-        <div>Subject commit: <code>{{.Attestation.Subject.CommitSHA}}</code></div>
-        <div>Conclusion:
-          {{if .Attestation.Conclusion.Pass}}<span class="ok">PASS</span>{{else}}<span class="ng">FAIL</span>{{end}}
+        <div>
+          raw_log_integrity:
+          {{if eq .SelectedSummary.AuditLogIntegrityChecked "true"}}
+            {{if eq .SelectedSummary.AuditLogIntegrityOK "true"}}<strong class="ok">PASS</strong>{{else if eq .SelectedSummary.AuditLogIntegrityOK "false"}}<strong class="ng">FAIL</strong>{{else}}<strong class="muted">-</strong>{{end}}
+          {{else}}
+            <strong class="muted">not checked</strong>
+          {{end}}
         </div>
-        <div>Reasons: <strong>{{len .Attestation.Conclusion.Reasons}}</strong></div>
-        <div class="muted mono" style="margin-top:8px">{{.AttestationPath}}</div>
+        {{if .SelectedSummary.Timestamp}}<div class="muted mono" style="margin-top:8px">ATTESTED_SUMMARY timestamp: {{.SelectedSummary.Timestamp}}</div>{{end}}
       {{else}}
         <div class="muted">No attestation / summary loaded for selected session.</div>
       {{end}}
@@ -1089,6 +1686,199 @@ var webUITmpl = template.Must(template.New("webui").Funcs(template.FuncMap{
     {{end}}
   </div>
 
+  <div class="card" style="margin-top:12px">
+    <h2>Workspace Files -> Writers (Session)</h2>
+    <div class="muted">Which workspace files were written, and by which writer identities/executables during the selected session.</div>
+    {{if gt (len .WorkspaceFileRows) 0}}
+      <div class="tablewrap" style="max-height:380px;">
+        <table class="mono">
+          <thead>
+            <tr>
+              <th>File Path</th>
+              <th style="width:9%">Writes</th>
+              <th style="width:12%">Writers</th>
+              <th style="width:14%">Comms</th>
+              <th style="width:20%">Details</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{range .WorkspaceFileRows}}
+            <tr>
+              <td class="path">{{.Path}}</td>
+              <td>{{.WriteCount}}</td>
+              <td>{{len .Writers}}{{if gt .WriterIdentityUnresolved 0}} <span class="muted">(+{{.WriterIdentityUnresolved}} unresolved)</span>{{end}}</td>
+              <td>{{if .Comms}}{{join .Comms ", "}}{{else}}-{{end}}</td>
+              <td>
+                <details>
+                  <summary>{{if .Writers}}Show writers{{else}}No resolved writer{{end}}</summary>
+                  {{if .Writers}}
+                    <div class="tablewrap" style="margin-top:8px; max-height:180px;">
+                      <table class="mono">
+                        <thead><tr><th>Path Hint</th><th style="width:28%">SHA256</th></tr></thead>
+                        <tbody>
+                          {{range .Writers}}
+                          <tr>
+                            <td class="path">{{.PathHint}}</td>
+                            <td class="sha-cell">
+                              <details>
+                                <summary>Show SHA256</summary>
+                                <div class="mono" style="margin-top:6px; overflow-wrap:anywhere;">{{.SHA256}}</div>
+                              </details>
+                            </td>
+                          </tr>
+                          {{end}}
+                        </tbody>
+                      </table>
+                    </div>
+                  {{end}}
+                  {{if .ByOp}}
+                    <div class="muted mono" style="margin-top:8px;">by_op: {{prettyJSON .ByOp}}</div>
+                  {{end}}
+                </details>
+              </td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+    {{else}}
+      <div class="muted">No workspace file-to-writer mappings for the selected session.</div>
+    {{end}}
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <h2>Files Touched by Forbidden Exec Lineage (Session)</h2>
+    <div class="muted">Derived correlation from <code>audit_exec.jsonl</code> + <code>audit_workspace_write.jsonl</code> using PID/PPID lineage and the applied session policy (<code>forbidden_exec</code>).</div>
+    {{if .ForbiddenLineageRows}}
+      <div class="tablewrap" style="max-height:360px;">
+        <table class="mono">
+          <thead>
+            <tr>
+              <th>File Path</th>
+              <th style="width:8%">Writes</th>
+              <th style="width:14%">Write Comms</th>
+              <th style="width:28%">Matched Forbidden Exec Lineage</th>
+              <th style="width:22%">Resolved Writers (Session)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{range .ForbiddenLineageRows}}
+            <tr>
+              <td class="path">{{.FilePath}}</td>
+              <td>{{.WriteCount}}</td>
+              <td>{{if .WriteComms}}{{join .WriteComms ", "}}{{else}}-{{end}}</td>
+              <td>
+                {{if .MatchedExecs}}
+                  <details>
+                    <summary class="ng">{{len .MatchedExecs}} match(es)</summary>
+                    <div class="tablewrap" style="margin-top:8px; max-height:180px;">
+                      <table class="mono">
+                        <thead><tr><th>Path Hint</th><th style="width:26%">SHA256</th><th style="width:14%">PID</th></tr></thead>
+                        <tbody>
+                          {{range .MatchedExecs}}
+                          <tr class="policy-hit">
+                            <td class="path">{{.PathHint}}</td>
+                            <td class="sha-cell">
+                              <details>
+                                <summary>Show SHA256</summary>
+                                <div class="mono" style="margin-top:6px; overflow-wrap:anywhere;">{{.SHA256}}</div>
+                              </details>
+                            </td>
+                            <td>{{.Pid}}</td>
+                          </tr>
+                          {{end}}
+                        </tbody>
+                      </table>
+                    </div>
+                  </details>
+                {{else}}-{{end}}
+              </td>
+              <td>
+                {{if .WriterPathHints}}
+                  <details>
+                    <summary>Show writer path hints ({{len .WriterPathHints}})</summary>
+                    <ul class="link-list" style="margin-top:6px;">
+                      {{range .WriterPathHints}}<li class="path">{{.}}</li>{{end}}
+                    </ul>
+                  </details>
+                {{else}}
+                  <span class="muted">No resolved writer identity</span>
+                {{end}}
+              </td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+    {{else}}
+      <div class="muted">No file writes correlated to forbidden-exec lineage for the selected session.</div>
+    {{end}}
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <h2>Commit Files -> Writers (Session)</h2>
+    <div class="muted">Commit-changed files (from <code>git show --name-only</code>) correlated with session file writes and forbidden-exec lineage.</div>
+    {{if .CommitFileRows}}
+      <div class="legend">
+        <span><span class="dot hit" style="background:var(--ng); border-color:var(--ng);"></span>Correlated to forbidden exec lineage</span>
+        <span><code>exec</code>/<code>writer</code>/<code>exec+writer</code> = matched policy source</span>
+      </div>
+      <div class="tablewrap" style="max-height:380px;">
+        <table class="mono">
+          <thead>
+            <tr>
+              <th>Commit File</th>
+              <th style="width:14%">Write Comms</th>
+              <th style="width:20%">Resolved Writers</th>
+              <th style="width:10%">Match Kind</th>
+              <th style="width:28%">Forbidden Lineage Match</th>
+              <th style="width:16%">Commits</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{range .CommitFileRows}}
+            <tr class="{{if .ForbiddenLineage}}policy-hit{{end}}">
+              <td class="path">{{.FilePath}}</td>
+              <td>{{if .WriteComms}}{{join .WriteComms ", "}}{{else}}-{{end}}</td>
+              <td>
+                {{if .WriterPathHints}}
+                  <details>
+                    <summary>Show ({{len .WriterPathHints}})</summary>
+                    <ul class="link-list" style="margin-top:6px;">
+                      {{range .WriterPathHints}}<li class="path">{{.}}</li>{{end}}
+                    </ul>
+                  </details>
+                {{else}}<span class="muted">-</span>{{end}}
+              </td>
+              <td>{{if eq .PolicyMatchKind "-"}}<span class="muted">-</span>{{else if eq .PolicyMatchKind "exec+writer"}}<span class="ng">exec+writer</span>{{else if eq .PolicyMatchKind "exec"}}<span class="ng">exec</span>{{else if eq .PolicyMatchKind "writer"}}<span class="ng">writer</span>{{else}}{{.PolicyMatchKind}}{{end}}</td>
+              <td>
+                {{if .ForbiddenLineage}}
+                  <details>
+                    <summary class="ng">Matched</summary>
+                    <ul class="link-list" style="margin-top:6px;">
+                      {{range .ForbiddenMatchInfo}}<li class="path">{{.}}</li>{{end}}
+                    </ul>
+                  </details>
+                {{else}}<span class="muted">-</span>{{end}}
+              </td>
+              <td>
+                <details>
+                  <summary>Show ({{len .CommitSHAs}})</summary>
+                  <ul class="link-list" style="margin-top:6px;">
+                    {{range .CommitSHAs}}<li><code>{{.}}</code></li>{{end}}
+                  </ul>
+                </details>
+              </td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+    {{else}}
+      <div class="muted">No commit/file correlation available for the selected session.</div>
+    {{end}}
+  </div>
+
   <div class="grid">
     <div class="card">
       <h2>Executed Identities (Session)</h2>
@@ -1213,7 +2003,7 @@ var webUITmpl = template.Must(template.New("webui").Funcs(template.FuncMap{
 
   {{if .Attestation}}
   <div class="card" style="margin-top:12px; margin-bottom:20px;">
-    <h2>Raw attestation.json (latest)</h2>
+    <h2>Raw attestation.json (selected session)</h2>
     <details><summary>Show JSON</summary><pre class="mono">{{prettyJSON .Attestation}}</pre></details>
   </div>
   {{end}}

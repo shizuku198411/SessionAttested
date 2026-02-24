@@ -17,6 +17,7 @@ Options:
   --policy <path>                    use explicit policy file (skip auto-generated e2e policy)
   --forbidden-exec-sha256s <csv>     comma-separated forbidden exec hashes for auto-generated policy
   --expect-fail                      treat attest/verify failure as expected
+  --tamper-raw-log-after-attest      tamper local raw audit log after attest and expect verify to fail with AUDIT_LOG_INTEGRITY_MISMATCH
   -h, --help                         show this help
 USAGE
 }
@@ -28,6 +29,7 @@ CONTAINER_NAME="attested-e2e"
 POLICY_PATH=""
 FORBID_LIST=""
 EXPECT_FAIL=0
+TAMPER_RAW_LOG_AFTER_ATTEST=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -59,6 +61,10 @@ while [[ $# -gt 0 ]]; do
       EXPECT_FAIL=1
       shift
       ;;
+    --tamper-raw-log-after-attest)
+      TAMPER_RAW_LOG_AFTER_ATTEST=1
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -70,6 +76,10 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+if [[ "$TAMPER_RAW_LOG_AFTER_ATTEST" == "1" ]]; then
+  EXPECT_FAIL=1
+fi
 
 for cmd in go docker openssl git python3; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
@@ -243,6 +253,23 @@ PY
   fi
 
   echo "[$session_label] verify"
+  if [[ "$TAMPER_RAW_LOG_AFTER_ATTEST" == "1" ]]; then
+    echo "[$session_label] tamper local raw audit log before verify (expected integrity mismatch)"
+    python3 - "$STATE_DIR/sessions/$session_id/audit_workspace_write.jsonl" <<'PY'
+import json, sys
+p = sys.argv[1]
+with open(p, 'r', encoding='utf-8') as f:
+    lines = [ln.rstrip('\n') for ln in f if ln.strip()]
+if not lines:
+    raise SystemExit("no audit_workspace_write.jsonl lines to tamper")
+obj = json.loads(lines[0])
+obj["comm"] = "tampered-e2e"
+lines[0] = json.dumps(obj, separators=(",", ":"), ensure_ascii=False)
+with open(p, 'w', encoding='utf-8') as f:
+    for ln in lines:
+        f.write(ln + "\n")
+PY
+  fi
   set +e
   go run ./cmd/attested verify \
     --attestation "$out_dir/attestation.json" \
@@ -259,6 +286,21 @@ PY
       return 1
     fi
     echo "verify failed as expected (rc=$verify_rc)"
+    if [[ "$TAMPER_RAW_LOG_AFTER_ATTEST" == "1" ]]; then
+      local verify_json
+      verify_json=$(go run ./cmd/attested verify \
+        --attestation "$out_dir/attestation.json" \
+        --signature "$out_dir/attestation.sig" \
+        --public-key "$out_dir/attestation.pub" \
+        --policy "$POLICY_PATH" \
+        --binding "$binding_path" \
+        --json || true)
+      echo "[$session_label] verify(json after tamper): $verify_json"
+      if [[ "$verify_json" != *"AUDIT_LOG_INTEGRITY_MISMATCH"* ]]; then
+        echo "error: expected AUDIT_LOG_INTEGRITY_MISMATCH after tamper ($session_label)" >&2
+        return 1
+      fi
+    fi
   else
     if [[ "$verify_rc" -ne 0 ]]; then
       echo "error: verify failed unexpectedly (rc=$verify_rc, $session_label)" >&2

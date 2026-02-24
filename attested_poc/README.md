@@ -453,6 +453,31 @@ Detailed exe/writer lists are shown lower on the page.
 The page shows both the applied policy and detected executables/writers (`Executed/Writer Identities`).
 Items that violate the policy are highlighted.
 
+In `v0.1.2`, the WebUI also includes:
+
+- `Workspace Files -> Writers (Session)`
+- `Files Touched by Forbidden Exec Lineage (Session)`
+- `Commit Files -> Writers (Session)`
+
+This makes it easier to explain:
+
+- which commit file was changed
+- which write comm / writer was involved
+- whether the file correlates to forbidden-exec lineage (`exec`) and/or forbidden writer (`writer`)
+
+`Match Kind` in the `Commit Files -> Writers (Session)` card means:
+
+- `exec`
+  - the file write is correlated to a forbidden executable lineage (PID/PPID ancestry),
+  - but the resolved writer identity itself did not match `forbidden_writers`
+- `writer`
+  - the resolved writer identity matched `forbidden_writers`,
+  - but forbidden-exec lineage correlation was not found for that file write
+- `exec+writer`
+  - both of the above are true (lineage correlation + forbidden writer identity match)
+
+![Commit Files](docs/assets/attested_webui_commit_file.png)
+
 For practical operation, the recommended usage split is:
 
 - Raw logs: evidence retention / later re-validation (e.g., artifact storage)

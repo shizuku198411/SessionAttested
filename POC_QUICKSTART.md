@@ -228,6 +228,10 @@ Review and rename it to your active policy file.
 - inspect `attestation.json.conclusion.reasons`
 - check `forbidden_exec` / `forbidden_writers`
 - if `policy_match=false`, confirm you used the intended policy
+- if the reason is `AUDIT_LOG_INTEGRITY_MISMATCH`:
+  - confirm you are using the latest `attested` binary
+  - check whether local session logs under `.attest_run/state/sessions/<SESSION_ID>/` were edited/replaced after collection
+  - compare `event_root.json` with the selected session `attestation.json` (`integrity.event_root`, `integrity.event_count`)
 
 ### Writer identity looks different from raw `comm`
 

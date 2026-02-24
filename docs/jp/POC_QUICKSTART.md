@@ -264,6 +264,10 @@ attested policy candidates
 - `ATTESTED_SUMMARY.reason` と `attestation.json.conclusion.reasons` を確認
 - `forbidden_exec` / `forbidden_writers` に引っかかっていないか確認
 - `policy_match=false` の場合は使用ポリシーが一致しているか確認
+- `AUDIT_LOG_INTEGRITY_MISMATCH` の場合:
+  - 最新の `attested` バイナリを使っているか確認
+  - `.attest_run/state/sessions/<SESSION_ID>/` 配下の raw 監査ログが収集後に編集/差し替えされていないか確認
+  - `event_root.json` と対象 session の `attestation.json`（`integrity.event_root`, `integrity.event_count`）を確認
 
 ### writer identity が期待通りに見えない
 

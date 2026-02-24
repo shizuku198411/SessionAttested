@@ -54,6 +54,7 @@ PoC では、少なくとも以下を信頼前提とします。
 - 禁止された実行体の起動（`forbidden_exec`）
 - 禁止された書き込み主体の workspace 書き込み（`forbidden_writers`）
 - 監査結果 JSON の事後改ざん（署名検証で検出）
+- ローカル raw 監査ログの事後改ざん（`.attest_run/state/sessions/<session_id>` が残っている workspace で verify する場合、`event_root` 再計算照合で検出）
 
 ### 5.2 検知しにくい/スコープ外のもの
 

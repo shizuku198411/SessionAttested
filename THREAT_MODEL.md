@@ -49,6 +49,7 @@ At minimum, the PoC assumes trust in:
 - prohibited executable launches (`forbidden_exec`)
 - prohibited writer identities writing to the workspace (`forbidden_writers`)
 - post-hoc attestation tampering (signature verification)
+- post-hoc local raw audit-log tampering when verifying on a workspace that still has `.attest_run/state/sessions/<session_id>` (event-root recomputation check)
 
 ### Hard / out of scope
 

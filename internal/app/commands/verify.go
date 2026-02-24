@@ -18,11 +18,13 @@ import (
 )
 
 type verifyOut struct {
-	OK            bool   `json:"ok"`
-	Pass          bool   `json:"pass"`
-	Reason        string `json:"reason,omitempty"`
-	PolicyChecked bool   `json:"policy_checked"`
-	PolicyMatch   bool   `json:"policy_match"`
+	OK                       bool   `json:"ok"`
+	Pass                     bool   `json:"pass"`
+	Reason                   string `json:"reason,omitempty"`
+	PolicyChecked            bool   `json:"policy_checked"`
+	PolicyMatch              bool   `json:"policy_match"`
+	AuditLogIntegrityChecked bool   `json:"audit_log_integrity_checked,omitempty"`
+	AuditLogIntegrityOK      bool   `json:"audit_log_integrity_ok,omitempty"`
 }
 
 func RunVerify(args []string) int {
@@ -106,6 +108,7 @@ func RunVerify(args []string) int {
 			chownPathToSudoOwnerBestEffort(filepath.Join(filepath.Dir(summaryPath), "ATTESTED_SUMMARY"))
 			chownPathToSudoOwnerBestEffort(filepath.Join(filepath.Dir(summaryPath), "ATTESTED_POLICY_LAST"))
 			chownPathToSudoOwnerBestEffort(filepath.Join(filepath.Dir(summaryPath), "ATTESTED_WORKSPACE_OBSERVED"))
+			chownPathToSudoOwnerBestEffort(filepath.Join(".attest_run", "reports"))
 		}
 		return emitVerify(*jsonOut, out, code)
 	}
@@ -221,6 +224,20 @@ func RunVerify(args []string) int {
 		}
 	}
 
+	// Optional local raw-audit integrity check (when state files are present locally).
+	ilr := verifyLocalAuditLogIntegrityIfAvailable(&att)
+	if ilr.Checked && !ilr.OK {
+		return finish(verifyOut{
+			OK:                       false,
+			Pass:                     att.Conclusion.Pass,
+			Reason:                   ilr.Reason,
+			PolicyChecked:            *policyPath != "",
+			PolicyMatch:              false,
+			AuditLogIntegrityChecked: true,
+			AuditLogIntegrityOK:      false,
+		}, 7)
+	}
+
 	// Optional: policy hash check
 	policyChecked := false
 	policyMatch := false
@@ -240,11 +257,13 @@ func RunVerify(args []string) int {
 		policyMatch = (att.Policy.RulesetHash == want)
 		if !policyMatch {
 			return finish(verifyOut{
-				OK:            false,
-				Pass:          att.Conclusion.Pass,
-				Reason:        "POLICY_MISMATCH",
-				PolicyChecked: true,
-				PolicyMatch:   false,
+				OK:                       false,
+				Pass:                     att.Conclusion.Pass,
+				Reason:                   "POLICY_MISMATCH",
+				PolicyChecked:            true,
+				PolicyMatch:              false,
+				AuditLogIntegrityChecked: ilr.Checked,
+				AuditLogIntegrityOK:      ilr.OK,
 			}, 7)
 		}
 	}
@@ -259,20 +278,24 @@ func RunVerify(args []string) int {
 			reason = reason + ": " + reasonDetail
 		}
 		return finish(verifyOut{
-			OK:            false,
-			Pass:          att.Conclusion.Pass,
-			Reason:        reason,
-			PolicyChecked: policyChecked,
-			PolicyMatch:   policyMatch || !policyChecked,
+			OK:                       false,
+			Pass:                     att.Conclusion.Pass,
+			Reason:                   reason,
+			PolicyChecked:            policyChecked,
+			PolicyMatch:              policyMatch || !policyChecked,
+			AuditLogIntegrityChecked: ilr.Checked,
+			AuditLogIntegrityOK:      ilr.OK,
 		}, 7)
 	}
 
 	// Success: note that att.Conclusion.Pass is the attestor's evaluation result (not verify's).
 	return finish(verifyOut{
-		OK:            true,
-		Pass:          att.Conclusion.Pass,
-		PolicyChecked: policyChecked,
-		PolicyMatch:   policyMatch || !policyChecked,
+		OK:                       true,
+		Pass:                     att.Conclusion.Pass,
+		PolicyChecked:            policyChecked,
+		PolicyMatch:              policyMatch || !policyChecked,
+		AuditLogIntegrityChecked: ilr.Checked,
+		AuditLogIntegrityOK:      ilr.OK,
 	}, 0)
 }
 
@@ -311,20 +334,22 @@ func defaultVerifySummaryPath() string {
 }
 
 type verifySummaryRecord struct {
-	Timestamp       string   `json:"timestamp"`
-	SessionID       string   `json:"session_id"`
-	Repo            string   `json:"repo"`
-	CommitSHA       []string `json:"commit_sha"`
-	CommitURL       []string `json:"commit_url,omitempty"`
-	VerifyOK        bool     `json:"verify_ok"`
-	AttestationPass bool     `json:"attestation_pass"`
-	Reason          string   `json:"reason,omitempty"`
-	PolicyChecked   bool     `json:"policy_checked"`
-	PolicyMatch     bool     `json:"policy_match"`
-	PolicyPath      string   `json:"policy_path,omitempty"`
-	PolicyID        string   `json:"policy_id,omitempty"`
-	PolicyVersion   string   `json:"policy_version,omitempty"`
-	RulesetHash     string   `json:"ruleset_hash,omitempty"`
+	Timestamp                string   `json:"timestamp"`
+	SessionID                string   `json:"session_id"`
+	Repo                     string   `json:"repo"`
+	CommitSHA                []string `json:"commit_sha"`
+	CommitURL                []string `json:"commit_url,omitempty"`
+	VerifyOK                 bool     `json:"verify_ok"`
+	AttestationPass          bool     `json:"attestation_pass"`
+	Reason                   string   `json:"reason,omitempty"`
+	PolicyChecked            bool     `json:"policy_checked"`
+	PolicyMatch              bool     `json:"policy_match"`
+	AuditLogIntegrityChecked bool     `json:"audit_log_integrity_checked,omitempty"`
+	AuditLogIntegrityOK      bool     `json:"audit_log_integrity_ok,omitempty"`
+	PolicyPath               string   `json:"policy_path,omitempty"`
+	PolicyID                 string   `json:"policy_id,omitempty"`
+	PolicyVersion            string   `json:"policy_version,omitempty"`
+	RulesetHash              string   `json:"ruleset_hash,omitempty"`
 }
 
 type attestedObservedRecord struct {
@@ -379,25 +404,30 @@ func writeVerifyResultArtifacts(summaryPath string, att *model.Attestation, out 
 	ts := time.Now().UTC().Format(time.RFC3339)
 	commitSHAs, commitURLs := summaryCommitRefs(att)
 	rec := verifySummaryRecord{
-		Timestamp:       ts,
-		SessionID:       att.Session.SessionID,
-		Repo:            att.Subject.Repo,
-		CommitSHA:       commitSHAs,
-		CommitURL:       commitURLs,
-		VerifyOK:        out.OK,
-		AttestationPass: out.Pass,
-		Reason:          out.Reason,
-		PolicyChecked:   out.PolicyChecked,
-		PolicyMatch:     out.PolicyMatch,
-		PolicyPath:      policyPath,
-		PolicyID:        att.Policy.PolicyID,
-		PolicyVersion:   att.Policy.PolicyVersion,
-		RulesetHash:     att.Policy.RulesetHash,
+		Timestamp:                ts,
+		SessionID:                att.Session.SessionID,
+		Repo:                     att.Subject.Repo,
+		CommitSHA:                commitSHAs,
+		CommitURL:                commitURLs,
+		VerifyOK:                 out.OK,
+		AttestationPass:          out.Pass,
+		Reason:                   out.Reason,
+		PolicyChecked:            out.PolicyChecked,
+		PolicyMatch:              out.PolicyMatch,
+		AuditLogIntegrityChecked: out.AuditLogIntegrityChecked,
+		AuditLogIntegrityOK:      out.AuditLogIntegrityOK,
+		PolicyPath:               policyPath,
+		PolicyID:                 att.Policy.PolicyID,
+		PolicyVersion:            att.Policy.PolicyVersion,
+		RulesetHash:              att.Policy.RulesetHash,
 	}
 	if err := appendVerifySummaryJSON(summaryPath, rec); err != nil {
 		return err
 	}
 	if err := appendWorkspaceObserved(filepath.Join(dir, "ATTESTED_WORKSPACE_OBSERVED"), att); err != nil {
+		return err
+	}
+	if err := writeSessionCorrelationArtifact(filepath.Join(".attest_run", "reports"), att); err != nil {
 		return err
 	}
 
@@ -406,6 +436,61 @@ func writeVerifyResultArtifacts(summaryPath string, att *model.Attestation, out 
 		_ = os.WriteFile(filepath.Join(dir, "ATTESTED_POLICY_LAST"), []byte(policyRaw), 0o644)
 	}
 	return nil
+}
+
+func writeSessionCorrelationArtifact(reportsRoot string, att *model.Attestation) error {
+	if att == nil {
+		return nil
+	}
+	sessionID := strings.TrimSpace(att.Session.SessionID)
+	if sessionID == "" {
+		return nil
+	}
+	st := state.StateDir{Root: filepath.Join(".attest_run", "state")}
+	forbiddenExecSet := make(map[string]struct{}, len(att.Policy.ForbiddenExec))
+	for _, r := range att.Policy.ForbiddenExec {
+		if s := strings.TrimSpace(r.SHA256); s != "" {
+			forbiddenExecSet[s] = struct{}{}
+		}
+	}
+	forbiddenWriterSet := make(map[string]struct{}, len(att.Policy.ForbiddenWriters))
+	for _, r := range att.Policy.ForbiddenWriters {
+		if s := strings.TrimSpace(r.SHA256); s != "" {
+			forbiddenWriterSet[s] = struct{}{}
+		}
+	}
+
+	var workspaceFiles []model.WorkspaceWriteFile
+	for _, wf := range att.AuditSummary.WorkspaceFiles {
+		if isHiddenWorkspacePathForUI(wf.Path) {
+			continue
+		}
+		workspaceFiles = append(workspaceFiles, wf)
+	}
+
+	forbiddenRows := buildForbiddenExecLineageRows(st, sessionID, &att.AuditSummary, forbiddenExecSet)
+	commitRows, err := buildCommitFileRows(att, workspaceFiles, forbiddenRows, forbiddenWriterSet)
+	if err != nil {
+		return fmt.Errorf("build commit correlations: %w", err)
+	}
+
+	art := sessionCorrelationArtifact{
+		SchemaVersion:        "1",
+		GeneratedAt:          time.Now().UTC().Format(time.RFC3339),
+		SessionID:            sessionID,
+		ForbiddenLineageRows: forbiddenRows,
+		CommitFileRows:       commitRows,
+	}
+	outPath := filepath.Join(reportsRoot, "sessions", sessionID, "session_correlation.json")
+	if err := os.MkdirAll(filepath.Dir(outPath), 0o755); err != nil {
+		return err
+	}
+	b, err := json.MarshalIndent(art, "", "  ")
+	if err != nil {
+		return err
+	}
+	b = append(b, '\n')
+	return os.WriteFile(outPath, b, 0o644)
 }
 
 func githubCommitURL(repo, commit string) string {

@@ -22,6 +22,7 @@ WebUI で確認できる監査結果（例）:
 - 実行体/書き込み主体一覧（ポリシーマッチ時のハイライト付き）
 - Workspace 累積観測一覧（`ATTESTED_WORKSPACE_OBSERVED`）
 - 適用ポリシー（セッションスナップショット）や commit リンク
+- commit 変更ファイルと write comm / writer / 禁止 exe 系譜の相関（WebUI カード）
 
 表示例（セッション一覧 + PASS/FAIL 概要）:
 
@@ -30,6 +31,8 @@ WebUI で確認できる監査結果（例）:
 表示例（FAIL ケース / VS Code 禁止ポリシー適用時）:
 
 ![SessionAttested WebUI Fail Case](../../attested_poc/docs/assets/attested_webui_case2_1.png)
+
+![Commit Files](../../attested_poc/docs/assets/attested_webui_commit_file.png)
 
 ## 監査アーキテクチャ（PoC）
 

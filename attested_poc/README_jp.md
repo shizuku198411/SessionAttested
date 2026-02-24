@@ -438,6 +438,33 @@ Case1のセッションは以下のように表示されます。
 適用されたポリシー(Applied Policy)と検知したexe/writer(Executed/Writer Identities)が表示されており、  
 ポリシー違反となっているexe/writerはハイライト表示されます。  
 
+`v0.1.2` では、さらに以下のカードが追加されています。
+
+- `Workspace Files -> Writers (Session)`
+- `Files Touched by Forbidden Exec Lineage (Session)`
+- `Commit Files -> Writers (Session)`
+
+これにより、
+
+- どの commit 変更ファイルが
+- どの write comm / writer によって書き込まれたか
+- 禁止 exe 系譜（`exec`）/ 禁止 writer（`writer`）のどちらに相関するか
+
+を画面上で追いやすくなっています。
+
+`Commit Files -> Writers (Session)` カードにおける `Match Kind` の意味は以下です。
+
+- `exec`
+  - 該当ファイルの書き込みが、禁止 exe のプロセス系譜（PID/PPID）に相関している
+  - ただし、解決できた writer identity 自体は `forbidden_writers` に一致していない
+- `writer`
+  - 解決できた writer identity が `forbidden_writers` に一致している
+  - ただし、そのファイル書き込みに対する禁止 exe 系譜の相関は見つかっていない
+- `exec+writer`
+  - 上記の両方が成立している（禁止 exe 系譜相関 + 禁止 writer 一致）
+
+![Commit Files](docs/assets/attested_webui_commit_file.png)
+
 通常運用においては、
 
 - 生ログ: Artifact保管用/後から検証するための証跡として利用

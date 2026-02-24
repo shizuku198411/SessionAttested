@@ -14,6 +14,7 @@
 - `ATTESTED`（プレーンテキストマーカー）
 - `ATTESTED_SUMMARY`（verify 結果一覧）
 - `ATTESTED_WORKSPACE_OBSERVED`（workspace 累積の観測一覧）
+- `.attest_run/reports/sessions/<SESSION_ID>/session_correlation.json`（セッション相関結果）
 
 これらの成果物は、ファイルを直接確認するか、`attested webui`（記録済み結果の閲覧 UI）で視覚的に確認できます。
 
@@ -47,6 +48,21 @@
       "open_write": 9
     }
   },
+  "workspace_files": [
+    {
+      "path": "/workspace/src/created_by_codex.txt",
+      "write_count": 1,
+      "comms": ["codex"],
+      "writers": [
+        {
+          "sha256": "sha256:f211b442bfb2eb20e4d6d7c0593b34ec421a5bcd630873c69ed7aaedeea28a26",
+          "inode": 8475246,
+          "dev": 1048687,
+          "path_hint": "/home/dev/.vscode-server/extensions/openai.chatgpt.../codex"
+        }
+      ]
+    }
+  ],
   "executed_identities": [
     {
       "sha256": "sha256:f211b442bfb2eb20e4d6d7c0593b34ec421a5bcd630873c69ed7aaedeea28a26",
@@ -80,12 +96,15 @@
   - 実行された実行体の fingerprint 集約
 - `writer_identities`
   - workspace write 主体の fingerprint 集約
+- `workspace_files`
+  - ファイル単位の書き込み集約（どのファイルが、どの writer / comm で書かれたか）
 
 実務上の見方:
 
 - `forbidden_exec` 判定の入力は主に `executed_identities`
 - `forbidden_writers` 判定の入力は主に `writer_identities`
 - `identity_unresolved` が急増した場合は collector 解決精度を確認
+- `workspace_files` は commit 変更ファイルとの照合や、ファイル単位の書き込み主体確認に有用
 
 ## 2. `event_root.json`
 
@@ -357,7 +376,64 @@ session 単位ではなく、複数 session をまたいだ `exec` / `writer` id
 - session 単位の詳細は `attestation.json` と `audit_summary.json` を参照します
 - WebUI の `Workspace Observed` 表示はこのファイルを使います
 
-## 10. フィールド追加・互換性の考え方（PoC）
+## 10. `.attest_run/reports/sessions/<SESSION_ID>/session_correlation.json`（セッション相関結果）
+
+`verify --write-result` 実行時に生成される、セッション単位の相関結果 JSON です。
+
+この JSON は、WebUI の以下のカードで使われる相関結果を保存します。
+
+- `Files Touched by Forbidden Exec Lineage (Session)`
+- `Commit Files -> Writers (Session)`
+
+例（抜粋）:
+
+```json
+{
+  "schema_version": "1",
+  "generated_at": "2026-02-24T12:34:56Z",
+  "session_id": "d0700fe7af45c14ab2d369f749d5a514",
+  "forbidden_lineage_rows": [
+    {
+      "file_path": "/workspace/src/created_by_codex.txt",
+      "write_count": 1,
+      "write_comms": ["codex"],
+      "matched_execs": [
+        {
+          "path_hint": "/home/dev/.vscode-server/.../codex",
+          "sha256": "sha256:...",
+          "pid": 319201
+        }
+      ],
+      "writer_path_hints": ["/home/dev/.vscode-server/.../codex"]
+    }
+  ],
+  "commit_file_rows": [
+    {
+      "file_path": "src/created_by_codex.txt",
+      "commit_shas": ["a1b2c3..."],
+      "write_comms": ["codex"],
+      "writer_path_hints": ["/home/dev/.vscode-server/.../codex"],
+      "forbidden_lineage": true,
+      "writer_policy_match": false,
+      "policy_match_kind": "exec",
+      "forbidden_match_info": ["/home/dev/.vscode-server/.../codex"]
+    }
+  ]
+}
+```
+
+用途:
+
+- WebUI 以外でも再利用可能な、再現性のある相関結果の保存
+- WebUI 表示と JSON 成果物の整合（JSON 成果物を正とする）
+- commit ファイル / writer / 禁止 exe 系譜の説明用データとしての利用
+
+運用上の注意:
+
+- WebUI は session 相関カードについて、この JSON を優先的に参照します
+- ファイルが無い場合のみ、互換性のため raw log + 既存成果物から導出する fallback を使うことがあります
+
+## 11. フィールド追加・互換性の考え方（PoC）
 
 PoC 時点では、運用しながら field を追加する可能性があります。
 
@@ -367,7 +443,7 @@ PoC 時点では、運用しながら field を追加する可能性がありま
 - 必須フィールドのみ厳格に扱う
 - `schema` / `policy_version` / `spec_version`（将来追加含む）を見て分岐する
 
-## 11. トラブルシュートで最初に見るファイル
+## 12. トラブルシュートで最初に見るファイル
 
 ケース別の初手:
 

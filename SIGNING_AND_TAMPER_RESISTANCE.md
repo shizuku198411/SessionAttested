@@ -40,8 +40,11 @@ High-level flow:
 3. validate structure / internal consistency
 4. optionally check commit binding consistency
 5. optionally compare against provided policy / policy snapshot
-6. optionally fail if `conclusion.pass=false` (`require-pass=true`)
-7. optionally write result markers (`ATTESTED`, `ATTESTED_SUMMARY`, `ATTESTED_POLICY_LAST`, `ATTESTED_WORKSPACE_OBSERVED`)
+6. if local session state (`.attest_run/state/sessions/<session_id>`) is available, recompute `event_root` from raw audit logs (`audit_exec.jsonl`, `audit_workspace_write.jsonl`) and compare it with:
+   - `event_root.json`
+   - `attestation.json` (`integrity.event_root`, `integrity.event_count`)
+7. optionally fail if `conclusion.pass=false` (`require-pass=true`)
+8. optionally write result markers (`ATTESTED`, `ATTESTED_SUMMARY`, `ATTESTED_POLICY_LAST`, `ATTESTED_WORKSPACE_OBSERVED`)
 
 ## 4. Role of Canonical JSON
 
@@ -62,6 +65,7 @@ Practical effect:
 
 - changing the underlying event set should change the event root
 - changing the event root changes the attestation payload and breaks signature verification (or consistency checks)
+- when local raw logs are available, `attested verify` can also detect post-hoc raw-log tampering by recomputing the hash chain and comparing it to the recorded `event_root`
 
 ## 6. What Tamper Resistance Means Here
 
@@ -78,6 +82,7 @@ If the trust assumptions hold (host, collector, key management), SessionAttested
 - mismatched `attestation.json` and `attestation.sig`
 - policy-result rewrites without resigning
 - unnoticed changes to event-root-bound session summaries
+- post-hoc modification of local raw audit logs (`audit_exec.jsonl`, `audit_workspace_write.jsonl`) when verifying on a workspace that still has local session state
 
 ## 8. What Is Not Protected (PoC Scope)
 

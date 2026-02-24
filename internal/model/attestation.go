@@ -87,6 +87,7 @@ type AuditSummary struct {
 	ExecObserved            ExecObserved            `json:"exec_observed"`
 	ExecutedIdentities      []ExecutableIdentity    `json:"executed_identities,omitempty"`
 	WorkspaceWritesObserved WorkspaceWritesObserved `json:"workspace_writes_observed"`
+	WorkspaceFiles          []WorkspaceWriteFile    `json:"workspace_files,omitempty"`
 	WriterIdentities        []ExecutableIdentity    `json:"writer_identities"`
 	Notes                   string                  `json:"notes,omitempty"`
 }
@@ -110,6 +111,15 @@ type WorkspaceWritesObserved struct {
 	UnapprovedWriterSeen          uint64            `json:"unapproved_writer_seen,omitempty"`
 	WriterIdentityUnresolved      uint64            `json:"writer_identity_unresolved,omitempty"`
 	WriterIdentityUnresolvedHints []string          `json:"writer_identity_unresolved_hints,omitempty"`
+}
+
+type WorkspaceWriteFile struct {
+	Path                     string               `json:"path"`
+	WriteCount               uint64               `json:"write_count"`
+	ByOp                     map[string]uint64    `json:"by_op,omitempty"`
+	Writers                  []ExecutableIdentity `json:"writers,omitempty"`
+	Comms                    []string             `json:"comms,omitempty"`
+	WriterIdentityUnresolved uint64               `json:"writer_identity_unresolved,omitempty"`
 }
 
 type ExecutableIdentity struct {

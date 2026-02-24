@@ -55,10 +55,20 @@ type sessionState struct {
 	writerIdentityUnresolved      uint64
 	execIdentityUnresolvedHints   []string
 	writerIdentityUnresolvedHints []string
+	workspaceFiles                map[string]*workspaceFileAgg
 
 	// window
 	start time.Time
 	end   time.Time
+}
+
+type workspaceFileAgg struct {
+	path             string
+	writeCount       uint64
+	byOp             map[string]uint64
+	writers          map[string]model.ExecutableIdentity
+	comms            map[string]struct{}
+	writerUnresolved uint64
 }
 
 type Collector struct {
@@ -371,12 +381,30 @@ func (c *Collector) handleEvent(ev *ExecEvent) {
 	case EventTypeWorkspaceWrite:
 		ss.workspaceWriteCount++
 		ss.workspaceWriteByOp["open_write"]++
+		fn := ev.FilenameString()
+		fw := ss.workspaceFiles[fn]
+		if fw == nil {
+			fw = &workspaceFileAgg{
+				path:    fn,
+				byOp:    map[string]uint64{},
+				writers: map[string]model.ExecutableIdentity{},
+				comms:   map[string]struct{}{},
+			}
+			ss.workspaceFiles[fn] = fw
+		}
+		fw.writeCount++
+		fw.byOp["open_write"]++
+		if comm := strings.TrimSpace(ev.CommString()); comm != "" {
+			fw.comms[comm] = struct{}{}
+		}
 
 		if id, ok := writerIdentityForPID(pid, ss.shaCache, ss.pidExec); ok {
 			key := fmt.Sprintf("%s:%d:%d", id.SHA256, id.Dev, id.Inode)
 			ss.writers[key] = id
+			fw.writers[key] = id
 		} else {
 			ss.writerIdentityUnresolved++
+			fw.writerUnresolved++
 			ss.writerIdentityUnresolvedHints = appendHint(ss.writerIdentityUnresolvedHints, fmt.Sprintf("pid=%d comm=%s fn=%s", pid, ev.CommString(), ev.FilenameString()))
 		}
 
@@ -388,7 +416,7 @@ func (c *Collector) handleEvent(ev *ExecEvent) {
 			Ppid:   ev.Ppid,
 			Uid:    ev.Uid,
 			Comm:   ev.CommString(),
-			Fn:     ev.FilenameString(),
+			Fn:     fn,
 			Op:     "open_write",
 			Flags:  ev.Flags,
 		}
@@ -528,8 +556,20 @@ func (c *Collector) RegisterSession(ctx context.Context, reg collector.SessionRe
 		execs:              map[string]model.ExecutableIdentity{},
 		shaCache:           map[string]string{},
 		pidExec:            map[int]model.ExecutableIdentity{},
+		workspaceFiles:     map[string]*workspaceFileAgg{},
 	}
 	return nil
+}
+
+func copyStringUint64Map(in map[string]uint64) map[string]uint64 {
+	if len(in) == 0 {
+		return nil
+	}
+	out := make(map[string]uint64, len(in))
+	for k, v := range in {
+		out[k] = v
+	}
+	return out
 }
 
 func (c *Collector) FinalizeSession(ctx context.Context, sessionID string) (*collector.FinalizeResult, error) {
@@ -548,6 +588,49 @@ func (c *Collector) FinalizeSession(ctx context.Context, sessionID string) (*col
 	for k, v := range ss.workspaceWriteByOp {
 		workspaceWriteByOp[k] = v
 	}
+	workspaceFiles := make([]model.WorkspaceWriteFile, 0, len(ss.workspaceFiles))
+	for _, fa := range ss.workspaceFiles {
+		row := model.WorkspaceWriteFile{
+			Path:                     fa.path,
+			WriteCount:               fa.writeCount,
+			ByOp:                     copyStringUint64Map(fa.byOp),
+			WriterIdentityUnresolved: fa.writerUnresolved,
+		}
+		if len(fa.writers) > 0 {
+			ws := make([]model.ExecutableIdentity, 0, len(fa.writers))
+			for _, w := range fa.writers {
+				ws = append(ws, w)
+			}
+			sort.Slice(ws, func(i, j int) bool {
+				if ws[i].SHA256 != ws[j].SHA256 {
+					return ws[i].SHA256 < ws[j].SHA256
+				}
+				if ws[i].Dev != ws[j].Dev {
+					return ws[i].Dev < ws[j].Dev
+				}
+				if ws[i].Inode != ws[j].Inode {
+					return ws[i].Inode < ws[j].Inode
+				}
+				return ws[i].PathHint < ws[j].PathHint
+			})
+			row.Writers = ws
+		}
+		if len(fa.comms) > 0 {
+			comms := make([]string, 0, len(fa.comms))
+			for c := range fa.comms {
+				comms = append(comms, c)
+			}
+			sort.Strings(comms)
+			row.Comms = comms
+		}
+		workspaceFiles = append(workspaceFiles, row)
+	}
+	sort.Slice(workspaceFiles, func(i, j int) bool {
+		if workspaceFiles[i].Path != workspaceFiles[j].Path {
+			return workspaceFiles[i].Path < workspaceFiles[j].Path
+		}
+		return workspaceFiles[i].WriteCount > workspaceFiles[j].WriteCount
+	})
 	writers := make([]model.ExecutableIdentity, 0, len(ss.writers))
 	for _, w := range ss.writers {
 		writers = append(writers, w)
@@ -604,7 +687,7 @@ func (c *Collector) FinalizeSession(ctx context.Context, sessionID string) (*col
 		},
 		ExecObserved: model.ExecObserved{
 			Count:                   execCount,
-			ForbiddenSeen:           0, // マイルストーン10で forbidden 照合を入れる（sha256 fingerprint 計算）
+			ForbiddenSeen:           0,
 			IdentityUnresolved:      execIdentityUnresolved,
 			IdentityUnresolvedHints: execUnresolvedHints,
 		},
@@ -615,6 +698,7 @@ func (c *Collector) FinalizeSession(ctx context.Context, sessionID string) (*col
 			WriterIdentityUnresolved:      writerIdentityUnresolved,
 			WriterIdentityUnresolvedHints: writerUnresolvedHints,
 		},
+		WorkspaceFiles:   workspaceFiles,
 		WriterIdentities: writers,
 	}
 

@@ -23,6 +23,7 @@ At a glance, you can inspect:
 - executed / writer identities (with policy-match highlights)
 - workspace cumulative observed identities (`ATTESTED_WORKSPACE_OBSERVED`)
 - applied policy snapshot and commit links
+- commit-changed files correlated with write comms / writers / forbidden-exec lineage (WebUI card)
 
 Example view (session list + PASS/FAIL overview):
 
@@ -31,6 +32,8 @@ Example view (session list + PASS/FAIL overview):
 Example view (fail case / VS Code-forbidden policy):
 
 ![SessionAttested WebUI Fail Case](attested_poc/docs/assets/attested_webui_case2_1.png)
+
+![Commit Files](attested_poc/docs/assets/attested_webui_commit_file.png)
 
 ## Status
 
