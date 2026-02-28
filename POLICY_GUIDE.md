@@ -8,6 +8,7 @@ This document explains how to design, review, and operate SessionAttested polici
 PoC recommendation:
 
 - Use `forbidden_exec` as the primary verdict
+- Use `forbidden_exec_lineage_writes` when you need to distinguish actual workspace impact
 - Use `forbidden_writers` as supplementary evidence
 
 ## 1. Purpose of Policy
@@ -23,6 +24,7 @@ policy_id: "sandbox-policy"
 policy_version: "1.0.0"
 
 forbidden_exec: []
+forbidden_exec_lineage_writes: []
 forbidden_writers: []
 
 exceptions: []
@@ -38,7 +40,18 @@ Typical use:
 - codex / claude-like agent binaries
 - disallowed code generators / fetchers / organization-specific tools
 
-### 2.2 `forbidden_writers`
+### 2.2 `forbidden_exec_lineage_writes`
+
+- evaluated against workspace writes correlated through forbidden exec lineage
+- stricter condition than `forbidden_exec`
+- useful when you only want to fail if a prohibited tool actually affected workspace files
+
+Typical use:
+
+- the same hashes as selected `forbidden_exec` rules when you care about workspace impact
+- high-risk tools where "executed" and "touched source files" should be distinguished
+
+### 2.3 `forbidden_writers`
 
 - evaluated against `writer_identities`
 - supplementary evidence for workspace write attribution
@@ -48,7 +61,7 @@ Typical use:
 - stable writer identities that directly write to `/workspace`
 - same hashes as `forbidden_exec` for stronger evidence
 
-### 2.3 `exceptions`
+### 2.4 `exceptions`
 
 Reserved for future conditional allow rules / operational exceptions.
 
@@ -133,6 +146,7 @@ Check:
 Typical reason codes:
 
 - `FORBIDDEN_EXEC_SEEN`
+- `FORBIDDEN_EXEC_LINEAGE_WRITE_SEEN`
 - `FORBIDDEN_WRITER_SEEN`
 - `UNAPPROVED_WRITER_SEEN` (legacy whitelist compatibility)
 
@@ -146,5 +160,6 @@ Typical reason codes:
 A safe starting point:
 
 - `forbidden_exec`: only the agent/tool binaries you prohibit
+- `forbidden_exec_lineage_writes`: empty at first, then selectively mirror rules that must not affect workspace files
 - `forbidden_writers`: empty (or same agent binaries only)
 - review `reason.detail` before changing policy

@@ -2,6 +2,43 @@
 
 [日本語](./CHANGELOG.md) | [English](../../CHANGELOG.md)
 
+## v0.1.3
+
+### 追加
+
+- `attested export artifact`
+  - artifact 公開用 staging を CLI 本体で生成
+  - 既定出力先を `attest/attested_artifacts/latest` に統一
+- `attested doctor`
+  - 環境/状態診断（config/state/session/attestation 整合、docker/sudo/lsm の確認）
+  - workspace 設定差分（再作成が必要な可能性）を検知
+- workflow 雛形生成コマンド
+  - `attested workflow github-artifact`
+  - `attested workflow github-verify`
+- 鍵運用改善
+  - `attestation.json` / `ATTESTED_SUMMARY` への署名鍵 fingerprint 記録
+  - `attested verify --expected-key-fingerprint` を追加
+  - `attested key fingerprint` を追加
+- lineage-aware policy
+  - `forbidden_exec_lineage_writes` を追加
+  - `FORBIDDEN_EXEC_LINEAGE_WRITE_SEEN` 判定を追加
+
+### 改善
+
+- WebUI のセッション相関表示を JSON 成果物優先（`session_correlation.json`）で統一
+- WebUI に commit ファイル相関の `Match Kind`（`exec` / `writer` / `exec+writer`）表示を追加
+- `policy candidates` が `forbidden_exec_lineage_writes` を含む候補生成に対応
+- GitHub verify workflow の安定性改善
+  - eBPF 生成依存 (`clang/llvm/libbpf-dev`, `go generate`) を雛形に反映
+  - artifact-only verify 実行コンテキストを固定
+  - verify 結果 artifact アップロードの temp path を修正
+
+### 変更
+
+- トップ README を再編
+  - 概要/ビルド/QuickStart を中心に簡素化
+  - 詳細は `PROJECT_OVERVIEW.md`（英日）へ切り出し
+
 ## v0.1.2
 
 ### 追加

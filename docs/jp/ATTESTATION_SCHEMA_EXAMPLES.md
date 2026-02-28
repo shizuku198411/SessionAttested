@@ -46,7 +46,8 @@
     "count": 9,
     "by_op": {
       "open_write": 9
-    }
+    },
+    "forbidden_exec_lineage_write_seen": 1
   },
   "workspace_files": [
     {
@@ -92,6 +93,8 @@
   - identity（sha256/path）解決に失敗した exec 件数
 - `workspace_writes_observed.count`
   - ワークスペース書き込みイベント数
+- `workspace_writes_observed.forbidden_exec_lineage_write_seen`
+  - `forbidden_exec_lineage_writes` に相関した workspace write 件数
 - `executed_identities`
   - 実行された実行体の fingerprint 集約
 - `writer_identities`
@@ -105,6 +108,7 @@
 - `forbidden_writers` 判定の入力は主に `writer_identities`
 - `identity_unresolved` が急増した場合は collector 解決精度を確認
 - `workspace_files` は commit 変更ファイルとの照合や、ファイル単位の書き込み主体確認に有用
+- `forbidden_exec_lineage_write_seen` は、「禁止ツールが実際に workspace ファイルへ影響したか」の確認に有用
 
 ## 2. `event_root.json`
 
@@ -206,6 +210,10 @@
       {
         "code": "FORBIDDEN_WRITER_SEEN",
         "detail": "count=1 samples=[sha256:f211b442b(.../codex)]"
+      },
+      {
+        "code": "FORBIDDEN_EXEC_LINEAGE_WRITE_SEEN",
+        "detail": "files=1 samples=[/workspace/src/created_by_codex.txt <= /home/dev/.vscode-server/.../codex]"
       }
     ]
   },
@@ -235,6 +243,7 @@
 
 - `conclusion.pass=false` でも、署名自体は正しい場合がある（「正常に fail した」）
 - `reason.detail` の `sha256/path_hint` から違反 identity を追える
+- `FORBIDDEN_EXEC_LINEAGE_WRITE_SEEN` は、「禁止 exec 系譜が workspace write に到達した」ことを意味する
 
 ## 6. `ATTESTED`（プレーンテキスト）
 
@@ -432,6 +441,7 @@ session 単位ではなく、複数 session をまたいだ `exec` / `writer` id
 
 - WebUI は session 相関カードについて、この JSON を優先的に参照します
 - ファイルが無い場合のみ、互換性のため raw log + 既存成果物から導出する fallback を使うことがあります
+- `forbidden_exec_lineage_writes` を policy に設定している場合、この JSON はその判定根拠の可視化にも使われます
 
 ## 11. フィールド追加・互換性の考え方（PoC）
 

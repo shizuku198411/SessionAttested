@@ -22,6 +22,9 @@ func ParsePolicy(raw []byte) (*Policy, error) {
 	if p.ForbiddenExec == nil {
 		p.ForbiddenExec = []Rule{}
 	}
+	if p.ForbiddenExecLineageWrites == nil {
+		p.ForbiddenExecLineageWrites = []Rule{}
+	}
 	if p.ForbiddenWriters == nil {
 		p.ForbiddenWriters = []Rule{}
 	}

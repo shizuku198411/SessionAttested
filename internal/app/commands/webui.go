@@ -57,6 +57,7 @@ type webUIView struct {
 	SummaryCommitLinks     []string
 	AttestationCommitLinks []string
 	ForbiddenExecSet       map[string]struct{}
+	ForbiddenExecLineageSet map[string]struct{}
 	ForbiddenWriterSet     map[string]struct{}
 	Errors                 []string
 }
@@ -138,6 +139,7 @@ type webUISummaryView struct {
 	Repo                     string
 	CommitSHAs               []string
 	CommitURLs               []string
+	SigningKeyFingerprint    string
 	Conclusion               string
 	ConclusionClass          string
 	Reason                   string
@@ -241,6 +243,12 @@ func loadWebUIView(runDir string, st state.StateDir, sessionID, addr string) web
 				v.ForbiddenExecSet[s] = struct{}{}
 			}
 		}
+		v.ForbiddenExecLineageSet = make(map[string]struct{}, len(att.Policy.ForbiddenExecLineageWrites))
+		for _, r := range att.Policy.ForbiddenExecLineageWrites {
+			if s := strings.TrimSpace(r.SHA256); s != "" {
+				v.ForbiddenExecLineageSet[s] = struct{}{}
+			}
+		}
 		v.ForbiddenWriterSet = make(map[string]struct{}, len(att.Policy.ForbiddenWriters))
 		for _, r := range att.Policy.ForbiddenWriters {
 			if s := strings.TrimSpace(r.SHA256); s != "" {
@@ -327,9 +335,13 @@ func loadWebUIView(runDir string, st state.StateDir, sessionID, addr string) web
 			v.CommitFileRows = art.CommitFileRows
 		}
 	}
-	if sessionID != "" && v.AuditSummary != nil && len(v.ForbiddenLineageRows) == 0 && len(v.ForbiddenExecSet) > 0 {
+	activeLineageSet := v.ForbiddenExecLineageSet
+	if len(activeLineageSet) == 0 {
+		activeLineageSet = v.ForbiddenExecSet // backward-compatible fallback
+	}
+	if sessionID != "" && v.AuditSummary != nil && len(v.ForbiddenLineageRows) == 0 && len(activeLineageSet) > 0 {
 		if len(v.ForbiddenLineageRows) == 0 {
-			v.ForbiddenLineageRows = buildForbiddenExecLineageRows(st, sessionID, v.AuditSummary, v.ForbiddenExecSet)
+			v.ForbiddenLineageRows = buildForbiddenExecLineageRows(st, sessionID, v.AuditSummary, activeLineageSet)
 		}
 	}
 	if v.Attestation != nil && len(v.CommitFileRows) == 0 {
@@ -554,6 +566,7 @@ func selectSummaryForSession(recs []map[string]any, sessionID string) *webUISumm
 		SessionID:                strings.TrimSpace(fmt.Sprint(rec["session_id"])),
 		Timestamp:                strings.TrimSpace(fmt.Sprint(rec["timestamp"])),
 		Repo:                     strings.TrimSpace(fmt.Sprint(rec["repo"])),
+		SigningKeyFingerprint:    cleanText(rec["signing_key_fingerprint"]),
 		Reason:                   cleanText(rec["reason"]),
 		VerifyOKText:             boolFieldText(rec, "verify_ok"),
 		AttPassText:              boolFieldText(rec, "attestation_pass"),
@@ -1448,6 +1461,9 @@ var webUITmpl = template.Must(template.New("webui").Funcs(template.FuncMap{
         <div>Conclusion:
           {{if .Attestation.Conclusion.Pass}}<span class="ok">PASS</span>{{else}}<span class="ng">FAIL</span>{{end}}
         </div>
+        <div>Signing key fingerprint:
+          {{if and .Attestation.Issuer .Attestation.Issuer.KeyFingerprint}}<code>{{.Attestation.Issuer.KeyFingerprint}}</code>{{else if and .SelectedSummary .SelectedSummary.SigningKeyFingerprint}}<code>{{.SelectedSummary.SigningKeyFingerprint}}</code>{{else}}<span class="muted">-</span>{{end}}
+        </div>
         <div>Reason:
           {{if .Attestation.Conclusion.Reasons}}
             {{if .Attestation.Conclusion.Pass}}
@@ -1494,6 +1510,9 @@ var webUITmpl = template.Must(template.New("webui").Funcs(template.FuncMap{
         </div>
         <div>Conclusion:
           {{if .SelectedSummary.ConclusionClass}}<span class="{{.SelectedSummary.ConclusionClass}}">{{.SelectedSummary.Conclusion}}</span>{{else}}{{.SelectedSummary.Conclusion}}{{end}}
+        </div>
+        <div>Signing key fingerprint:
+          {{if .SelectedSummary.SigningKeyFingerprint}}<code>{{.SelectedSummary.SigningKeyFingerprint}}</code>{{else}}<span class="muted">-</span>{{end}}
         </div>
         <div>Reason:
           {{if .SelectedSummary.ReasonCode}}
@@ -1605,6 +1624,28 @@ var webUITmpl = template.Must(template.New("webui").Funcs(template.FuncMap{
         </div>
         {{else}}<div class="muted">No forbidden exec rules.</div>{{end}}
 
+        <h3 style="margin-top:12px;">Forbidden Exec Lineage Writes</h3>
+        {{if .Attestation.Policy.ForbiddenExecLineageWrites}}
+        <div class="tablewrap">
+          <table class="mono">
+            <thead><tr><th>Comment / Path Hint</th><th style="width:26%">SHA256</th></tr></thead>
+            <tbody>
+              {{range .Attestation.Policy.ForbiddenExecLineageWrites}}
+              <tr>
+                <td class="path">{{.Comment}}</td>
+                <td class="sha-cell">
+                  <details>
+                    <summary>Show SHA256</summary>
+                    <div class="mono" style="margin-top:6px; overflow-wrap:anywhere;">{{.SHA256}}</div>
+                  </details>
+                </td>
+              </tr>
+              {{end}}
+            </tbody>
+          </table>
+        </div>
+        {{else}}<div class="muted">No forbidden exec lineage write rules.</div>{{end}}
+
         <h3 style="margin-top:12px;">Forbidden Writers</h3>
         {{if .Attestation.Policy.ForbiddenWriters}}
         <div class="tablewrap">
@@ -1654,6 +1695,28 @@ var webUITmpl = template.Must(template.New("webui").Funcs(template.FuncMap{
             </table>
           </div>
           {{else}}<div class="muted">No forbidden exec rules.</div>{{end}}
+
+          <h3 style="margin-top:12px;">Forbidden Exec Lineage Writes</h3>
+          {{if .AttestedPolicyParsed.ForbiddenExecLineageWrites}}
+          <div class="tablewrap">
+            <table class="mono">
+              <thead><tr><th>Comment / Path Hint</th><th style="width:26%">SHA256</th></tr></thead>
+              <tbody>
+                {{range .AttestedPolicyParsed.ForbiddenExecLineageWrites}}
+                <tr>
+                  <td class="path">{{.Comment}}</td>
+                  <td class="sha-cell">
+                    <details>
+                      <summary>Show SHA256</summary>
+                      <div class="mono" style="margin-top:6px; overflow-wrap:anywhere;">{{.SHA256}}</div>
+                    </details>
+                  </td>
+                </tr>
+                {{end}}
+              </tbody>
+            </table>
+          </div>
+          {{else}}<div class="muted">No forbidden exec lineage write rules.</div>{{end}}
 
           <h3 style="margin-top:12px;">Forbidden Writers</h3>
           {{if .AttestedPolicyParsed.ForbiddenWriters}}

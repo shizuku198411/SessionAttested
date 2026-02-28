@@ -237,7 +237,58 @@ attested webui --addr 0.0.0.0:9443
 - TLS は自己署名証明書のため、ブラウザ警告が出ます（想定どおり）
 - UI で別セッションを選択すると `ATTESTED_SUMMARY` を元に表示結果が切り替わります
 
-## 13. ポリシー候補の生成（PoC で便利）
+## 13. v0.1.3 の運用補助コマンド（`doctor` / `export artifact` / workflow 雛形）
+
+### 13.1 ローカル環境と状態の診断
+
+```bash
+attested doctor
+```
+
+JSON で確認する場合:
+
+```bash
+attested doctor --json
+```
+
+主に確認できる内容:
+
+- config / session / state の整合
+- docker / sudo / lsm の基本状態
+- workspace コンテナ設定差分（再作成が必要な可能性）
+- attestation / 署名鍵 fingerprint の整合ヒント
+
+### 13.2 Artifact staging の出力
+
+```bash
+attested export artifact
+```
+
+既定出力先:
+
+- `attest/attested_artifacts/latest`
+
+raw ログも含める場合:
+
+```bash
+attested export artifact --include-raw-logs
+```
+
+### 13.3 GitHub workflow 雛形の生成
+
+Artifact 公開用:
+
+```bash
+attested workflow github-artifact
+```
+
+GitHub 上で verify 実行する雛形（workflow内で SessionAttested を clone/build）:
+
+```bash
+attested workflow github-verify
+```
+
+## 14. ポリシー候補の生成（PoC で便利）
 
 監査結果から candidate policy を生成できます。
 
@@ -251,7 +302,7 @@ attested policy candidates
 
 レビュー後に rename して本番ポリシーとして利用します。
 
-## 14. PoC でよくあるハマりどころ
+## 15. PoC でよくあるハマりどころ
 
 ### collector が起動しない / finalize されない
 
@@ -281,7 +332,7 @@ attested policy candidates
   - `attested workspace rm`
   - `attested workspace init`
 
-## 14. 次のステップ
+## 16. 次のステップ
 
 - `POLICY_GUIDE.md` を参照して禁止ツールポリシーを整備する
 - `THREAT_MODEL.md` を参照して、監査主張の範囲を明確化する

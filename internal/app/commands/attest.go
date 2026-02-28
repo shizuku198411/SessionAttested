@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"session-attested/internal/attest"
 	"session-attested/internal/crypto"
@@ -140,6 +141,22 @@ func RunAttest(args []string) int {
 
 	// Evaluate
 	eval := attest.Evaluate(pol, &summary)
+	if len(pol.ForbiddenExecLineageWrites) > 0 {
+		lineageSet := policy.BuildSet(pol.ForbiddenExecLineageWrites)
+		if len(lineageSet) > 0 {
+			rows := buildForbiddenExecLineageRows(st, *sessionID, &summary, lineageSet)
+			if len(rows) > 0 {
+				eval.Pass = false
+				eval.Reasons = dropOKConclusionReasons(eval.Reasons)
+				eval.ForbiddenExecLineageWriteSeen = uint64(len(rows))
+				summary.WorkspaceWritesObserved.ForbiddenExecLineageWriteSeen = uint64(len(rows))
+				eval.Reasons = append(eval.Reasons, model.ConclusionReason{
+					Code:   "FORBIDDEN_EXEC_LINEAGE_WRITE_SEEN",
+					Detail: formatForbiddenLineageReasonDetail(rows),
+				})
+			}
+		}
+	}
 
 	// Build attestation object
 	in := attest.BuildInput{
@@ -167,17 +184,26 @@ func RunAttest(args []string) int {
 		return 2
 	}
 
+	// Sign (load key first so we can embed signer fingerprint into attestation before canonicalization)
+	priv, err := crypto.LoadEd25519PrivateKey(*signingKeyPath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "error: load signing key:", err)
+		return 2
+	}
+	pub := crypto.PublicFromPrivate(priv)
+	if fp, err := crypto.Ed25519PublicKeyFingerprint(pub); err == nil {
+		if att.Issuer == nil {
+			att.Issuer = &model.Issuer{Method: "ed25519"}
+		} else if att.Issuer.Method == "" {
+			att.Issuer.Method = "ed25519"
+		}
+		att.Issuer.KeyFingerprint = fp
+	}
+
 	// Canonical bytes for signing (IMPORTANT: this is what verify will canonicalize and verify against)
 	canonAtt, err := spec.CanonicalJSON(att)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error: canonical attestation:", err)
-		return 2
-	}
-
-	// Sign
-	priv, err := crypto.LoadEd25519PrivateKey(*signingKeyPath)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "error: load signing key:", err)
 		return 2
 	}
 	sig := crypto.SignEd25519(priv, canonAtt)
@@ -214,7 +240,6 @@ func RunAttest(args []string) int {
 	}
 
 	// Write public key alongside (PoC: always emit)
-	pub := crypto.PublicFromPrivate(priv)
 	if err := crypto.SaveEd25519PublicKey(pubPath, pub); err != nil {
 		fmt.Fprintln(os.Stderr, "error: write public key:", err)
 		return 2
@@ -275,6 +300,43 @@ func RunAttest(args []string) int {
 		return 0
 	}
 	return 6
+}
+
+func dropOKConclusionReasons(in []model.ConclusionReason) []model.ConclusionReason {
+	if len(in) == 0 {
+		return in
+	}
+	out := in[:0]
+	for _, r := range in {
+		if strings.TrimSpace(r.Code) == "OK" {
+			continue
+		}
+		out = append(out, r)
+	}
+	return out
+}
+
+func formatForbiddenLineageReasonDetail(rows []forbiddenLineageRow) string {
+	if len(rows) == 0 {
+		return ""
+	}
+	const maxSamples = 5
+	samples := make([]string, 0, maxSamples)
+	for i, row := range rows {
+		if i >= maxSamples {
+			break
+		}
+		file := strings.TrimSpace(row.FilePath)
+		if file == "" {
+			file = "(unknown)"
+		}
+		if len(row.MatchedExecs) > 0 && row.MatchedExecs[0].PathHint != "" {
+			samples = append(samples, fmt.Sprintf("%s <= %s", file, row.MatchedExecs[0].PathHint))
+		} else {
+			samples = append(samples, file)
+		}
+	}
+	return fmt.Sprintf("files=%d samples=[%s]", len(rows), strings.Join(samples, ", "))
 }
 
 func deriveSessionAttestationOutDir(outDir, sessionID string) string {

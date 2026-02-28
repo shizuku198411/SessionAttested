@@ -69,12 +69,13 @@ type ContainerImage struct {
 }
 
 type PolicyRef struct {
-	PolicyID         string                  `json:"policy_id"`
-	PolicyVersion    string                  `json:"policy_version"`
-	RulesetHash      string                  `json:"ruleset_hash"`
-	ForbiddenExec    []ExecutableFingerprint `json:"forbidden_exec"`
-	ForbiddenWriters []ExecutableFingerprint `json:"forbidden_writers,omitempty"`
-	AllowedWriters   []ExecutableFingerprint `json:"allowed_writers,omitempty"` // legacy whitelist snapshot
+	PolicyID                   string                  `json:"policy_id"`
+	PolicyVersion              string                  `json:"policy_version"`
+	RulesetHash                string                  `json:"ruleset_hash"`
+	ForbiddenExec              []ExecutableFingerprint `json:"forbidden_exec"`
+	ForbiddenExecLineageWrites []ExecutableFingerprint `json:"forbidden_exec_lineage_writes,omitempty"`
+	ForbiddenWriters           []ExecutableFingerprint `json:"forbidden_writers,omitempty"`
+	AllowedWriters             []ExecutableFingerprint `json:"allowed_writers,omitempty"` // legacy whitelist snapshot
 }
 
 type ExecutableFingerprint struct {
@@ -108,6 +109,7 @@ type WorkspaceWritesObserved struct {
 	Count                         uint64            `json:"count"`
 	ByOp                          map[string]uint64 `json:"by_op,omitempty"`
 	ForbiddenWriterSeen           uint64            `json:"forbidden_writer_seen,omitempty"`
+	ForbiddenExecLineageWriteSeen uint64            `json:"forbidden_exec_lineage_write_seen,omitempty"`
 	UnapprovedWriterSeen          uint64            `json:"unapproved_writer_seen,omitempty"`
 	WriterIdentityUnresolved      uint64            `json:"writer_identity_unresolved,omitempty"`
 	WriterIdentityUnresolvedHints []string          `json:"writer_identity_unresolved_hints,omitempty"`
@@ -147,7 +149,8 @@ type ConclusionReason struct {
 }
 
 type Issuer struct {
-	Name   string `json:"name,omitempty"`
-	KeyID  string `json:"key_id,omitempty"`
-	Method string `json:"method,omitempty"`
+	Name           string `json:"name,omitempty"`
+	KeyID          string `json:"key_id,omitempty"`
+	Method         string `json:"method,omitempty"`
+	KeyFingerprint string `json:"key_fingerprint,omitempty"`
 }

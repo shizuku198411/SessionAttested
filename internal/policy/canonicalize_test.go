@@ -66,8 +66,41 @@ exceptions: []
 	if p.PolicyVersion != "1.0.0" {
 		t.Fatalf("policy_version mismatch: %s", p.PolicyVersion)
 	}
-	if p.ForbiddenExec == nil || p.ForbiddenWriters == nil || p.AllowedWriters == nil {
+	if p.ForbiddenExec == nil || p.ForbiddenExecLineageWrites == nil || p.ForbiddenWriters == nil || p.AllowedWriters == nil {
 		t.Fatalf("lists must be non-nil")
+	}
+}
+
+func TestCanonicalizeYAML_ForbiddenExecLineageWritesIncludedWhenPresent(t *testing.T) {
+	y1 := []byte(`
+policy_id: "poc-default"
+policy_version: "1.0.0"
+forbidden_exec: []
+forbidden_exec_lineage_writes:
+  - sha256: "sha256:cccc"
+    comment: "codex-lineage"
+forbidden_writers: []
+allowed_writers: []
+`)
+	y2 := []byte(`
+policy_id: "poc-default"
+policy_version: "1.0.0"
+forbidden_exec: []
+forbidden_exec_lineage_writes:
+  - sha256: "sha256:dddd"
+forbidden_writers: []
+allowed_writers: []
+`)
+	c1, err := CanonicalizeYAML(y1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c2, err := CanonicalizeYAML(y2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if RulesetHash(c1) == RulesetHash(c2) {
+		t.Fatalf("expected different hash when forbidden_exec_lineage_writes differs")
 	}
 }
 

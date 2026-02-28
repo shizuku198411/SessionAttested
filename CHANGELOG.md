@@ -2,6 +2,42 @@
 
 [English](./CHANGELOG.md) | [日本語](docs/jp/CHANGELOG.md)
 
+## v0.1.3
+
+### Added
+
+- `attested export artifact`
+  - CLI-native artifact staging generation
+  - unified default output: `attest/attested_artifacts/latest`
+- `attested doctor`
+  - environment/state diagnostics (config/state/session/attestation consistency, docker/sudo/lsm checks)
+  - workspace config-drift detection (recreate-needed hints)
+- GitHub workflow template generators
+  - `attested workflow github-artifact`
+  - `attested workflow github-verify`
+- Signing-key operations improvements
+  - signing-key fingerprint persisted in `attestation.json` / `ATTESTED_SUMMARY`
+  - `attested verify --expected-key-fingerprint`
+  - `attested key fingerprint`
+- lineage-aware policy support
+  - `forbidden_exec_lineage_writes`
+  - verdict reason `FORBIDDEN_EXEC_LINEAGE_WRITE_SEEN`
+
+### Improved
+
+- WebUI session correlation cards now consistently prefer persisted JSON (`session_correlation.json`)
+- WebUI commit-correlation card now includes `Match Kind` (`exec` / `writer` / `exec+writer`)
+- `policy candidates` now emits `forbidden_exec_lineage_writes`
+- GitHub verify workflow robustness
+  - eBPF build prerequisites (`clang/llvm/libbpf-dev`, `go generate`) embedded in template
+  - artifact-only verify execution context fixed
+  - verification-result artifact upload temp path fixed
+
+### Changed
+
+- Top-level README streamlined to overview/build/quickstart
+- Detailed sections moved to `PROJECT_OVERVIEW.md` (EN/JP)
+
 ## v0.1.2
 
 ### Added

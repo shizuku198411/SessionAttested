@@ -63,12 +63,13 @@ func BuildAttestation(in BuildInput, eval EvaluationResult, issuerName, keyID st
 			},
 		},
 		Policy: model.PolicyRef{
-			PolicyID:         in.Policy.PolicyID,
-			PolicyVersion:    in.Policy.PolicyVersion,
-			RulesetHash:      in.PolicyRulesetHash,
-			ForbiddenExec:    toExecutableFingerprints(in.Policy.ForbiddenExec),
-			ForbiddenWriters: toExecutableFingerprints(in.Policy.ForbiddenWriters),
-			AllowedWriters:   toExecutableFingerprints(in.Policy.AllowedWriters), // legacy snapshot if present
+			PolicyID:                   in.Policy.PolicyID,
+			PolicyVersion:              in.Policy.PolicyVersion,
+			RulesetHash:                in.PolicyRulesetHash,
+			ForbiddenExec:              toExecutableFingerprints(in.Policy.ForbiddenExec),
+			ForbiddenExecLineageWrites: toExecutableFingerprints(in.Policy.ForbiddenExecLineageWrites),
+			ForbiddenWriters:           toExecutableFingerprints(in.Policy.ForbiddenWriters),
+			AllowedWriters:             toExecutableFingerprints(in.Policy.AllowedWriters), // legacy snapshot if present
 		},
 		AuditSummary: *in.Summary,
 		Integrity: model.Integrity{
@@ -86,6 +87,7 @@ func BuildAttestation(in BuildInput, eval EvaluationResult, issuerName, keyID st
 
 	// reflect counters into audit summary fields (optional but useful)
 	a.AuditSummary.ExecObserved.ForbiddenSeen = eval.ForbiddenExecSeen
+	a.AuditSummary.WorkspaceWritesObserved.ForbiddenExecLineageWriteSeen = eval.ForbiddenExecLineageWriteSeen
 	a.AuditSummary.WorkspaceWritesObserved.ForbiddenWriterSeen = eval.ForbiddenWriterSeen
 	a.AuditSummary.WorkspaceWritesObserved.UnapprovedWriterSeen = eval.UnapprovedWriterSeen
 	if in.Binding != nil {

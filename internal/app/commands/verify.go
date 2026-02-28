@@ -23,6 +23,7 @@ type verifyOut struct {
 	Reason                   string `json:"reason,omitempty"`
 	PolicyChecked            bool   `json:"policy_checked"`
 	PolicyMatch              bool   `json:"policy_match"`
+	SigningKeyFingerprint    string `json:"signing_key_fingerprint,omitempty"`
 	AuditLogIntegrityChecked bool   `json:"audit_log_integrity_checked,omitempty"`
 	AuditLogIntegrityOK      bool   `json:"audit_log_integrity_ok,omitempty"`
 }
@@ -41,6 +42,7 @@ func RunVerify(args []string) int {
 	attPath := fs.String("attestation", "", "path to attestation.json")
 	sigPath := fs.String("signature", "", "path to attestation.sig")
 	pubPath := fs.String("public-key", "", "path to attestation public key (PEM). default: <attestation dir>/attestation.pub")
+	expectedKeyFingerprint := fs.String("expected-key-fingerprint", "", "expected signing public key fingerprint (sha256:<hex>)")
 	policyPath := fs.String("policy", "", "path to policy.yaml (optional)")
 	bindingPath := fs.String("binding", "", "path to commit_binding.json (optional)")
 	requirePass := fs.Bool("require-pass", true, "fail verification when attestation conclusion.pass is false")
@@ -152,21 +154,42 @@ func RunVerify(args []string) int {
 		fmt.Fprintln(os.Stderr, "error: load public key:", err)
 		return 2
 	}
+	pubFP, err := crypto.Ed25519PublicKeyFingerprint(pub)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "error: compute public key fingerprint:", err)
+		return 2
+	}
+	if want := normalizeKeyFingerprint(*expectedKeyFingerprint); want != "" && normalizeKeyFingerprint(pubFP) != want {
+		return finish(verifyOut{
+			OK:                    false,
+			Pass:                  att.Conclusion.Pass,
+			Reason:                "SIGNING_KEY_FINGERPRINT_MISMATCH",
+			PolicyChecked:         *policyPath != "",
+			PolicyMatch:           false,
+			SigningKeyFingerprint: pubFP,
+		}, 7)
+	}
+	finishFP := func(out verifyOut, code int) int {
+		if out.SigningKeyFingerprint == "" {
+			out.SigningKeyFingerprint = pubFP
+		}
+		return finish(out, code)
+	}
 
 	if !crypto.VerifyEd25519(pub, canonAtt, sigBytes) {
-		return finish(verifyOut{
-			OK:            false,
-			Pass:          att.Conclusion.Pass,
-			Reason:        "SIGNATURE_INVALID",
-			PolicyChecked: *policyPath != "",
-			PolicyMatch:   false,
+		return finishFP(verifyOut{
+			OK:                    false,
+			Pass:                  att.Conclusion.Pass,
+			Reason:                "SIGNATURE_INVALID",
+			PolicyChecked:         *policyPath != "",
+			PolicyMatch:           false,
 		}, 7)
 	}
 
 	if att.Session.CommitBinding != nil {
 		b := att.Session.CommitBinding
 		if b.CommitSHA == "" || b.CommitSHA != att.Subject.CommitSHA {
-			return finish(verifyOut{
+			return finishFP(verifyOut{
 				OK:            false,
 				Pass:          att.Conclusion.Pass,
 				Reason:        "INTEGRITY_MISMATCH",
@@ -178,7 +201,7 @@ func RunVerify(args []string) int {
 	if n := len(att.Session.CommitBindings); n > 0 {
 		last := att.Session.CommitBindings[n-1]
 		if last.CommitSHA == "" || last.CommitSHA != att.Subject.CommitSHA {
-			return finish(verifyOut{
+			return finishFP(verifyOut{
 				OK:            false,
 				Pass:          att.Conclusion.Pass,
 				Reason:        "INTEGRITY_MISMATCH",
@@ -194,7 +217,7 @@ func RunVerify(args []string) int {
 			return 2
 		}
 		if cb.SessionID != "" && cb.SessionID != att.Session.SessionID {
-			return finish(verifyOut{
+			return finishFP(verifyOut{
 				OK:            false,
 				Pass:          att.Conclusion.Pass,
 				Reason:        "INTEGRITY_MISMATCH",
@@ -203,7 +226,7 @@ func RunVerify(args []string) int {
 			}, 7)
 		}
 		if cb.CommitSHA == "" || cb.CommitSHA != att.Subject.CommitSHA {
-			return finish(verifyOut{
+			return finishFP(verifyOut{
 				OK:            false,
 				Pass:          att.Conclusion.Pass,
 				Reason:        "INTEGRITY_MISMATCH",
@@ -213,7 +236,7 @@ func RunVerify(args []string) int {
 		}
 		if att.Session.CommitBinding != nil {
 			if att.Session.CommitBinding.ParentSHA != "" && cb.ParentSHA != "" && att.Session.CommitBinding.ParentSHA != cb.ParentSHA {
-				return finish(verifyOut{
+				return finishFP(verifyOut{
 					OK:            false,
 					Pass:          att.Conclusion.Pass,
 					Reason:        "INTEGRITY_MISMATCH",
@@ -227,7 +250,7 @@ func RunVerify(args []string) int {
 	// Optional local raw-audit integrity check (when state files are present locally).
 	ilr := verifyLocalAuditLogIntegrityIfAvailable(&att)
 	if ilr.Checked && !ilr.OK {
-		return finish(verifyOut{
+		return finishFP(verifyOut{
 			OK:                       false,
 			Pass:                     att.Conclusion.Pass,
 			Reason:                   ilr.Reason,
@@ -256,7 +279,7 @@ func RunVerify(args []string) int {
 		want := policy.RulesetHash(canon)
 		policyMatch = (att.Policy.RulesetHash == want)
 		if !policyMatch {
-			return finish(verifyOut{
+			return finishFP(verifyOut{
 				OK:                       false,
 				Pass:                     att.Conclusion.Pass,
 				Reason:                   "POLICY_MISMATCH",
@@ -277,7 +300,7 @@ func RunVerify(args []string) int {
 		if reasonDetail != "" {
 			reason = reason + ": " + reasonDetail
 		}
-		return finish(verifyOut{
+		return finishFP(verifyOut{
 			OK:                       false,
 			Pass:                     att.Conclusion.Pass,
 			Reason:                   reason,
@@ -289,7 +312,7 @@ func RunVerify(args []string) int {
 	}
 
 	// Success: note that att.Conclusion.Pass is the attestor's evaluation result (not verify's).
-	return finish(verifyOut{
+	return finishFP(verifyOut{
 		OK:                       true,
 		Pass:                     att.Conclusion.Pass,
 		PolicyChecked:            policyChecked,
@@ -344,6 +367,7 @@ type verifySummaryRecord struct {
 	Reason                   string   `json:"reason,omitempty"`
 	PolicyChecked            bool     `json:"policy_checked"`
 	PolicyMatch              bool     `json:"policy_match"`
+	SigningKeyFingerprint    string   `json:"signing_key_fingerprint,omitempty"`
 	AuditLogIntegrityChecked bool     `json:"audit_log_integrity_checked,omitempty"`
 	AuditLogIntegrityOK      bool     `json:"audit_log_integrity_ok,omitempty"`
 	PolicyPath               string   `json:"policy_path,omitempty"`
@@ -414,6 +438,7 @@ func writeVerifyResultArtifacts(summaryPath string, att *model.Attestation, out 
 		Reason:                   out.Reason,
 		PolicyChecked:            out.PolicyChecked,
 		PolicyMatch:              out.PolicyMatch,
+		SigningKeyFingerprint:    out.SigningKeyFingerprint,
 		AuditLogIntegrityChecked: out.AuditLogIntegrityChecked,
 		AuditLogIntegrityOK:      out.AuditLogIntegrityOK,
 		PolicyPath:               policyPath,
@@ -459,6 +484,15 @@ func writeSessionCorrelationArtifact(reportsRoot string, att *model.Attestation)
 			forbiddenWriterSet[s] = struct{}{}
 		}
 	}
+	forbiddenExecLineageSet := make(map[string]struct{}, len(att.Policy.ForbiddenExecLineageWrites))
+	for _, r := range att.Policy.ForbiddenExecLineageWrites {
+		if s := strings.TrimSpace(r.SHA256); s != "" {
+			forbiddenExecLineageSet[s] = struct{}{}
+		}
+	}
+	if len(forbiddenExecLineageSet) == 0 {
+		forbiddenExecLineageSet = forbiddenExecSet // backward-compatible fallback
+	}
 
 	var workspaceFiles []model.WorkspaceWriteFile
 	for _, wf := range att.AuditSummary.WorkspaceFiles {
@@ -468,7 +502,7 @@ func writeSessionCorrelationArtifact(reportsRoot string, att *model.Attestation)
 		workspaceFiles = append(workspaceFiles, wf)
 	}
 
-	forbiddenRows := buildForbiddenExecLineageRows(st, sessionID, &att.AuditSummary, forbiddenExecSet)
+	forbiddenRows := buildForbiddenExecLineageRows(st, sessionID, &att.AuditSummary, forbiddenExecLineageSet)
 	commitRows, err := buildCommitFileRows(att, workspaceFiles, forbiddenRows, forbiddenWriterSet)
 	if err != nil {
 		return fmt.Errorf("build commit correlations: %w", err)
@@ -609,6 +643,17 @@ func appendWorkspaceObserved(path string, att *model.Attestation) error {
 
 func bytesTrimSpace(b []byte) []byte {
 	return []byte(strings.TrimSpace(string(b)))
+}
+
+func normalizeKeyFingerprint(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	if s == "" {
+		return ""
+	}
+	if !strings.HasPrefix(s, "sha256:") {
+		s = "sha256:" + s
+	}
+	return s
 }
 
 func appendUniqueString(dst []string, v string) []string {

@@ -12,6 +12,7 @@ type EvaluationResult struct {
 	Pass                 bool
 	Reasons              []model.ConclusionReason
 	ForbiddenExecSeen    uint64
+	ForbiddenExecLineageWriteSeen uint64
 	ForbiddenWriterSeen  uint64
 	UnapprovedWriterSeen uint64
 }
@@ -87,6 +88,7 @@ func Evaluate(p *policy.Policy, summary *model.AuditSummary) EvaluationResult {
 		Pass:                 pass,
 		Reasons:              reasons,
 		ForbiddenExecSeen:    forbiddenExecSeen,
+		ForbiddenExecLineageWriteSeen: 0,
 		ForbiddenWriterSeen:  forbiddenWriterSeen,
 		UnapprovedWriterSeen: unapprovedWriterSeen,
 	}

@@ -24,6 +24,7 @@ func CanonicalizeYAML(raw []byte) ([]byte, error) {
 
 	// Normalize rules: keep only sha256 fields; comments are non-semantic.
 	forbidden := normalizeRules(p.ForbiddenExec)
+	forbiddenLineage := normalizeRules(p.ForbiddenExecLineageWrites)
 	forbiddenWriters := normalizeRules(p.ForbiddenWriters)
 	allowed := normalizeRules(p.AllowedWriters) // legacy compatibility
 
@@ -35,6 +36,9 @@ func CanonicalizeYAML(raw []byte) ([]byte, error) {
 		"forbidden_writers": forbiddenWriters,
 		"allowed_writers":   allowed,
 		// "exceptions": omitted in PoC canonicalization
+	}
+	if len(forbiddenLineage) > 0 {
+		obj["forbidden_exec_lineage_writes"] = forbiddenLineage
 	}
 
 	// Canonical JSON bytes (stable key order etc.)

@@ -51,7 +51,7 @@ var commandFlagAllowlist = map[string]map[string]struct{}{
 		"issuer-name", "key-id", "state-dir", "use-binding", "json",
 	),
 	"verify": setOf(
-		"attestation", "signature", "public-key", "policy", "binding", "require-pass", "write-result", "result-file", "json",
+		"attestation", "signature", "public-key", "expected-key-fingerprint", "policy", "binding", "require-pass", "write-result", "result-file", "json",
 	),
 	"policy_hash": setOf(
 		"policy", "json",
@@ -68,6 +68,18 @@ var commandFlagAllowlist = map[string]map[string]struct{}{
 	),
 	"workspace_rm": setOf(
 		"state-dir", "workspace-id", "json", "remove-workspace-host",
+	),
+	"export_artifact": setOf(
+		"session", "state-dir", "run-dir", "out", "policy", "include-raw-logs", "json",
+	),
+	"doctor": setOf(
+		"session", "state-dir", "run-dir", "json",
+	),
+	"workflow_github_artifact": setOf(
+		"out", "artifact-dir", "repo", "json",
+	),
+	"workflow_github_verify": setOf(
+		"out", "artifact-dir", "sessionattested-repo", "sessionattested-ref", "json",
 	),
 }
 

@@ -8,6 +8,7 @@
 PoC 時点の推奨方針:
 
 - `forbidden_exec` を主判定に使う
+- `forbidden_exec_lineage_writes` は「実作業ファイルへ影響したか」を区別したい場合に使う
 - `forbidden_writers` を補助判定に使う
 
 ## 1. ポリシーの役割
@@ -30,6 +31,7 @@ policy_id: "sandbox-policy"
 policy_version: "1.0.0"
 
 forbidden_exec: []
+forbidden_exec_lineage_writes: []
 forbidden_writers: []
 
 exceptions: []
@@ -45,7 +47,18 @@ exceptions: []
 - `codex`, `claude`, 特定 extension binary
 - 組織で禁止したいコード生成/取得ツール
 
-### 2.2 `forbidden_writers`
+### 2.2 `forbidden_exec_lineage_writes`
+
+- 禁止 exec 系譜と相関した workspace write に対する禁止リスト
+- `forbidden_exec` より厳しい条件
+- 「禁止ツールが実行された」だけでなく、「実際に workspace ファイルへ影響した」ことを fail 条件にしたい場合に使う
+
+推奨用途:
+
+- `forbidden_exec` のうち、実作業ファイルへの波及も禁止したい実行体
+- 実行検知と、実ファイル影響を区別して運用したい高リスクツール
+
+### 2.3 `forbidden_writers`
 
 - `writer_identities`（workspace write 主体集約）に対する禁止リスト
 - 補助証拠として使う
@@ -55,7 +68,7 @@ exceptions: []
 - 直接 write 主体として安定して観測される実行体（例: 特定 editor backend）
 - `forbidden_exec` と同じ hash を重ねて検証強化したい場合
 
-### 2.3 `exceptions`
+### 2.4 `exceptions`
 
 PoC では詳細運用は限定的ですが、将来的な例外（特定条件で許容）のための拡張余地です。
 
@@ -136,6 +149,7 @@ attested policy candidates \
 ### 6.1 AI Agent 不使用検証（PoC の主用途）
 
 - `forbidden_exec`: AI Agent 実行体 hash を登録
+- `forbidden_exec_lineage_writes`: 実作業ファイルへの波及まで禁止したい場合に選択的に登録
 - `forbidden_writers`: 同 hash を必要に応じて登録
 
 期待結果:
@@ -164,6 +178,7 @@ attested policy candidates \
 例:
 
 - `FORBIDDEN_EXEC_SEEN`
+- `FORBIDDEN_EXEC_LINEAGE_WRITE_SEEN`
 - `FORBIDDEN_WRITER_SEEN`
 
 確認手順:

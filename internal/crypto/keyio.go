@@ -1,9 +1,11 @@
 package crypto
 
 import (
+	"crypto/sha256"
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/x509"
+	"encoding/hex"
 	"encoding/pem"
 	"fmt"
 	"os"
@@ -97,4 +99,15 @@ func LoadEd25519PublicKey(path string) (ed25519.PublicKey, error) {
 func PublicFromPrivate(priv ed25519.PrivateKey) ed25519.PublicKey {
 	// ed25519.PrivateKey.Public() returns crypto.PublicKey which is ed25519.PublicKey.
 	return priv.Public().(ed25519.PublicKey)
+}
+
+// Ed25519PublicKeyFingerprint returns a stable fingerprint for a public key:
+// sha256:<hex(SHA-256(PKIX-DER(public key)))>.
+func Ed25519PublicKeyFingerprint(pub ed25519.PublicKey) (string, error) {
+	der, err := x509.MarshalPKIXPublicKey(pub)
+	if err != nil {
+		return "", fmt.Errorf("marshal pkix public key for fingerprint: %w", err)
+	}
+	sum := sha256.Sum256(der)
+	return "sha256:" + hex.EncodeToString(sum[:]), nil
 }

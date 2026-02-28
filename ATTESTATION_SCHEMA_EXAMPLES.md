@@ -29,7 +29,11 @@ Aggregated session audit summary (counts, identities, unresolved counters).
 {
   "window": {"start_rfc3339": "2026-02-22T09:51:43Z", "end_rfc3339": "2026-02-22T09:56:44Z"},
   "exec_observed": {"count": 1438, "identity_unresolved": 19},
-  "workspace_writes_observed": {"count": 9, "by_op": {"open_write": 9}},
+  "workspace_writes_observed": {
+    "count": 9,
+    "by_op": {"open_write": 9},
+    "forbidden_exec_lineage_write_seen": 1
+  },
   "workspace_files": [
     {
       "path": "/workspace/src/created_by_codex.txt",
@@ -55,6 +59,8 @@ Use it for:
 - which workspace file was written
 - by which resolved writer identity (if available)
 - and which `comm` values were observed for those writes
+
+`workspace_writes_observed.forbidden_exec_lineage_write_seen` indicates how many workspace writes matched a configured `forbidden_exec_lineage_writes` policy rule.
 
 ## 2. `event_root.json`
 
@@ -102,10 +108,15 @@ Signed payload containing subject, session, event root, policy conclusion, and s
   "subject": {"repo": "shizuku198411/sandbox", "commit_sha": "3a1e62a00e3640b6e65cf1620c85a2dc23beef76"},
   "session": {"session_id": "28e005395ea6b8720012b3b091d826e4", "commit_bindings": [{"commit_sha": "3a1e62a..."}]},
   "event_root": {"root": "sha256:4a2f3c..."},
-  "conclusion": {"pass": false, "reasons": [{"code": "FORBIDDEN_EXEC_SEEN", "detail": "count=1 samples=[sha256:...(.../codex)]"}]},
+  "conclusion": {"pass": false, "reasons": [{"code": "FORBIDDEN_EXEC_SEEN", "detail": "count=1 samples=[sha256:...(.../codex)]"}, {"code": "FORBIDDEN_EXEC_LINEAGE_WRITE_SEEN", "detail": "files=1 samples=[/workspace/src/created_by_codex.txt <= /home/dev/.vscode-server/.../codex]"}]},
   "signature": {"key_id": "sandbox-key-1", "issuer_name": "sandbox-attestor"}
 }
 ```
+
+Operational note:
+
+- if the applied policy includes `forbidden_exec_lineage_writes`, the policy snapshot in `attestation.json` may also include `policy.forbidden_exec_lineage_writes`
+- `FORBIDDEN_EXEC_LINEAGE_WRITE_SEEN` means a prohibited exec lineage was correlated to actual workspace writes
 
 ## 6. `ATTESTED`
 

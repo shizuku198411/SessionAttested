@@ -14,6 +14,9 @@ type Policy struct {
 	PolicyID         string `yaml:"policy_id" json:"policy_id"`
 	PolicyVersion    string `yaml:"policy_version" json:"policy_version"`
 	ForbiddenExec    []Rule `yaml:"forbidden_exec" json:"forbidden_exec"`
+	// ForbiddenExecLineageWrites fails when a forbidden exec (matched by sha256) is
+	// observed in the ancestor lineage of workspace write events.
+	ForbiddenExecLineageWrites []Rule `yaml:"forbidden_exec_lineage_writes,omitempty" json:"forbidden_exec_lineage_writes,omitempty"`
 	ForbiddenWriters []Rule `yaml:"forbidden_writers" json:"forbidden_writers"`
 	AllowedWriters   []Rule `yaml:"allowed_writers,omitempty" json:"allowed_writers,omitempty"` // legacy whitelist (backward compatibility)
 	Exceptions       []any  `yaml:"exceptions,omitempty" json:"exceptions,omitempty"`

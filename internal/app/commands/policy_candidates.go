@@ -17,19 +17,21 @@ import (
 )
 
 type policyCandidatesOut struct {
-	SessionID     string `json:"session_id"`
-	SummaryPath   string `json:"summary_path"`
-	CandidatePath string `json:"candidate_path"`
-	WriterCount   int    `json:"writer_count"`
-	ExecCount     int    `json:"exec_count,omitempty"`
+	SessionID          string `json:"session_id"`
+	SummaryPath        string `json:"summary_path"`
+	CandidatePath      string `json:"candidate_path"`
+	WriterCount        int    `json:"writer_count"`
+	ExecCount          int    `json:"exec_count,omitempty"`
+	ExecLineageCount   int    `json:"exec_lineage_count,omitempty"`
 }
 
 type candidatePolicyFile struct {
-	PolicyID         string        `yaml:"policy_id"`
-	PolicyVersion    string        `yaml:"policy_version"`
-	ForbiddenExec    []policy.Rule `yaml:"forbidden_exec"`
-	ForbiddenWriters []policy.Rule `yaml:"forbidden_writers"`
-	Exceptions       []any         `yaml:"exceptions"`
+	PolicyID                   string        `yaml:"policy_id"`
+	PolicyVersion              string        `yaml:"policy_version"`
+	ForbiddenExec              []policy.Rule `yaml:"forbidden_exec"`
+	ForbiddenExecLineageWrites []policy.Rule `yaml:"forbidden_exec_lineage_writes"`
+	ForbiddenWriters           []policy.Rule `yaml:"forbidden_writers"`
+	Exceptions                 []any         `yaml:"exceptions"`
 }
 
 func RunPolicyCandidates(args []string) int {
@@ -67,18 +69,22 @@ func RunPolicyCandidates(args []string) int {
 
 	writers := candidateRules(summary.WriterIdentities, *includeGit, *includeAttested)
 	var execs []policy.Rule
+	var execLineage []policy.Rule
 	if *includeExec {
 		execs = candidateRules(summary.ExecutedIdentities, *includeGit, *includeAttested)
+		execLineage = append([]policy.Rule(nil), execs...)
 	} else {
 		execs = []policy.Rule{}
+		execLineage = []policy.Rule{}
 	}
 
 	candidate := candidatePolicyFile{
-		PolicyID:         "candidate-" + *sessionID,
-		PolicyVersion:    "1.0.0",
-		ForbiddenExec:    execs,
-		ForbiddenWriters: writers,
-		Exceptions:       []any{},
+		PolicyID:                   "candidate-" + *sessionID,
+		PolicyVersion:              "1.0.0",
+		ForbiddenExec:              execs,
+		ForbiddenExecLineageWrites: execLineage,
+		ForbiddenWriters:           writers,
+		Exceptions:                 []any{},
 	}
 
 	dst := *outPath
@@ -108,6 +114,7 @@ func RunPolicyCandidates(args []string) int {
 			CandidatePath: dst,
 			WriterCount:   len(writers),
 			ExecCount:     len(execs),
+			ExecLineageCount: len(execLineage),
 		}
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetEscapeHTML(false)

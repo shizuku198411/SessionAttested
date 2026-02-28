@@ -202,7 +202,58 @@ Notes:
 - TLS is self-signed (browser warning expected)
 - Selecting another session in the UI updates the displayed summary/result using `ATTESTED_SUMMARY`
 
-## 13. Generate a Candidate Policy
+## 13. v0.1.3 Workflow Helpers (`doctor` / `export artifact` / workflow templates)
+
+### 13.1 Diagnose local state and environment
+
+```bash
+attested doctor
+```
+
+JSON output:
+
+```bash
+attested doctor --json
+```
+
+Use this to quickly check:
+
+- config/session/state consistency
+- docker/sudo/lsm basics
+- workspace container config drift hints (recreate likely)
+- attestation/signing-key fingerprint consistency hints
+
+### 13.2 Export artifact staging directory
+
+```bash
+attested export artifact
+```
+
+Default output:
+
+- `attest/attested_artifacts/latest`
+
+Optional (include raw logs):
+
+```bash
+attested export artifact --include-raw-logs
+```
+
+### 13.3 Generate GitHub workflow templates
+
+Artifact publish template:
+
+```bash
+attested workflow github-artifact
+```
+
+Verification template (clones/builds SessionAttested in workflow):
+
+```bash
+attested workflow github-verify
+```
+
+## 14. Generate a Candidate Policy
 
 ```bash
 attested policy candidates
@@ -214,7 +265,7 @@ Output:
 
 Review and rename it to your active policy file.
 
-## 14. Common PoC Pitfalls
+## 15. Common PoC Pitfalls
 
 ### Collector does not start / finalize
 
